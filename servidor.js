@@ -65,7 +65,7 @@ async function claude({ model, system, messages, max_tokens }) {
     body: JSON.stringify({ model, max_tokens, system, messages }),
   });
   const data = await r.json();
-  if (!r.ok) throw new Error(data.error?.message || 'Erro da API');
+  if (!r.ok) throw new Error(data.error?.message || 'API error');
   addUsage(model, data.usage);
   return data.content?.[0]?.text ?? '';
 }
@@ -73,26 +73,26 @@ function parseJson(t) { const m = t.match(/\{[\s\S]*\}/); return JSON.parse(m ? 
 
 // Inventário de estruturas B2 alto/C1 (lista própria, inspirada nos descritores do English Grammar Profile; confirmar condições de uso antes de integrar o recurso oficial)
 const C1_INVENTORY = ['inversion after negative adverbials (Not only / Rarely / Never)','cleft sentences (It was... that / What I... is)','mixed conditionals','third conditional with inversion (Had I known)','passive with reporting verbs (It is said that)','causative have/get something done','modal perfects for deduction (must/can\'t have)','wish/if only with past perfect','subjunctive (I suggest that he be)','participle clauses (Having finished...)','nominalisation','hedging (tends to, seems to, arguably)','discourse markers (Admittedly, Mind you, That said)','concessive clauses (albeit, notwithstanding, much as)','emphatic do','fronting for emphasis','future perfect continuous','ellipsis and substitution','idiomatic collocations (a heated debate, widespread criticism)','phrasal verbs with multiple meanings'];
-const ERR_SHAPE = '"errors":[{"original":"...","correction":"...","type":"grammar|vocabulary|register|punctuation|pronunciation","explanation":"one short sentence in Portuguese"}]';
+const ERR_SHAPE = '"errors":[{"original":"...","correction":"...","type":"grammar|vocabulary|register|punctuation|pronunciation","explanation":"one short sentence in English"}]';
 const TASKS = {
   placement_writing: (p) => ({
-    system: `You are a Cambridge-trained examiner. Assess the CEFR level (B1, B2, C1 or C2) of a short text written by a Spanish/Portuguese-speaking learner. Reply ONLY with JSON: {"cefr":"B2","strengths":["..."],"weaknesses":["..."],${ERR_SHAPE}}. Write strengths, weaknesses and explanations in Portuguese.`,
+    system: `You are a Cambridge-trained examiner. Assess the CEFR level (B1, B2, C1 or C2) of a short text written by a Spanish/Portuguese-speaking learner. Reply ONLY with JSON: {"cefr":"B2","strengths":["..."],"weaknesses":["..."],${ERR_SHAPE}}. Write strengths, weaknesses and explanations in English.`,
     user: `Prompt: ${p.prompt}\n\nText:\n${p.text}`, max: 1200,
   }),
   placement_speaking: (p) => ({
-    system: `You are a Cambridge-trained examiner. From this transcript of a placement interview (learner = "user"), estimate CEFR levels (B1,B2,C1,C2) for fluency, grammar, vocabulary, coherence and interaction. Pronunciation can only be guessed from the text: say so. Reply ONLY with JSON: {"cefr":"B2","scores":{"fluency":"B2","grammar":"B2","vocabulary":"B2","coherence":"B2","interaction":"B2"},"strengths":["..."],"weaknesses":["..."],${ERR_SHAPE}}. Write comments in Portuguese.`,
+    system: `You are a Cambridge-trained examiner. From this transcript of a placement interview (learner = "user"), estimate CEFR levels (B1,B2,C1,C2) for fluency, grammar, vocabulary, coherence and interaction. Pronunciation can only be guessed from the text: say so. Reply ONLY with JSON: {"cefr":"B2","scores":{"fluency":"B2","grammar":"B2","vocabulary":"B2","coherence":"B2","interaction":"B2"},"strengths":["..."],"weaknesses":["..."],${ERR_SHAPE}}. Write comments in English.`,
     user: JSON.stringify(p.transcript), max: 1500,
   }),
   cambridge_writing: (p) => ({
-    system: `You are a Cambridge C1 Advanced writing examiner. Mark the text on the four scales (content, communicative achievement, organisation, language), each 0-5 with a one-sentence comment in Portuguese. Then give a corrected version of the text and the list of errors. Reply ONLY with JSON: {"scores":{"content":{"score":3,"comment":"..."},"communicative":{"score":3,"comment":"..."},"organisation":{"score":3,"comment":"..."},"language":{"score":3,"comment":"..."}},"corrected":"...",${ERR_SHAPE}}. Types of text: ${p.kind}.`,
+    system: `You are a Cambridge C1 Advanced writing examiner. Mark the text on the four scales (content, communicative achievement, organisation, language), each 0-5 with a one-sentence comment in English. Then give a corrected version of the text and the list of errors. Reply ONLY with JSON: {"scores":{"content":{"score":3,"comment":"..."},"communicative":{"score":3,"comment":"..."},"organisation":{"score":3,"comment":"..."},"language":{"score":3,"comment":"..."}},"corrected":"...",${ERR_SHAPE}}. Types of text: ${p.kind}.`,
     user: `Task: ${p.task}\n\nStudent text:\n${p.text}`, max: 2500,
   }),
   rewrite_check: (p) => ({
-    system: `The student rewrote sentences that were marked as wrong. For each pair decide if the new version is now correct. Reply ONLY with JSON: {"results":[{"ok":true,"comment":"short comment in Portuguese"}]} in the same order.`,
+    system: `The student rewrote sentences that were marked as wrong. For each pair decide if the new version is now correct. Reply ONLY with JSON: {"results":[{"ok":true,"comment":"short comment in English"}]} in the same order.`,
     user: JSON.stringify(p.items), max: 800,
   }),
   report: (p) => ({
-    system: `You are an English speaking coach writing a post-session report for a Spanish/Portuguese-speaking learner aiming at C1 (British English). Judge from the transcript (learner = "user"). Pronunciation can only be inferred from the text and low-confidence words: focus on intelligibility, not accent. Reply ONLY with JSON: {"summary":"2 sentences in Portuguese",${ERR_SHAPE},"top3":[0,1,2],"good":["advanced expressions or structures used correctly"],"vocab":[{"term":"...","definition":"short English definition","example":"sentence from the session"}],"grammar_cards":[{"title":"...","wrong":"learner sentence","right":"corrected sentence","rule":"one line in Portuguese","examples":["...","..."]}],"pronunciation":["short tip in Portuguese"],"next":"one concrete recommendation in Portuguese","fluency_notes":"short comment in Portuguese on coherence/connectors","c1_used":["items copied EXACTLY from this inventory that the learner used correctly: ${C1_INVENTORY.join(' | ')}"],"mediation":"if the learner did a mediation task, a comment in Portuguese, else empty"}. "top3" are indexes of the 3 priority errors in "errors".`,
+    system: `You are an English speaking coach writing a post-session report for a Spanish/Portuguese-speaking learner aiming at C1 (British English). Judge from the transcript (learner = "user"). Pronunciation can only be inferred from the text and low-confidence words: focus on intelligibility, not accent. Reply ONLY with JSON: {"summary":"2 sentences in English",${ERR_SHAPE},"top3":[0,1,2],"good":["advanced expressions or structures used correctly"],"vocab":[{"term":"...","definition":"short English definition","example":"sentence from the session"}],"grammar_cards":[{"title":"...","wrong":"learner sentence","right":"corrected sentence","rule":"one line in English","examples":["...","..."]}],"pronunciation":["short tip in English"],"next":"one concrete recommendation in English","fluency_notes":"short comment in English on coherence/connectors","c1_used":["items copied EXACTLY from this inventory that the learner used correctly: ${C1_INVENTORY.join(' | ')}"],"mediation":"if the learner did a mediation task, a comment in English, else empty"}. "top3" are indexes of the 3 priority errors in "errors".`,
     user: JSON.stringify({ transcript: p.transcript, metrics: p.metrics, lowConfidenceWords: p.lowConfidence || [] }), max: 3000,
   }),
 };
@@ -108,7 +108,7 @@ function tag(x, t) { const m = x.match(new RegExp(`<${t}[^>]*>([\\s\\S]*?)</${t}
 async function getFeed(name) {
   const c = rssCache[name]; if (c && Date.now() - c.t < 3600e3) return c.items;
   const r = await fetch(FEEDS[name], { headers: { 'user-agent': 'EnglishCourse/1.0' } });
-  if (!r.ok) throw new Error('Feed indisponível: ' + r.status);
+  if (!r.ok) throw new Error('Feed unavailable: ' + r.status);
   const xml = await r.text();
   const items = [...xml.matchAll(/<item[\s>][\s\S]*?<\/item>/g)].slice(0, 12).map(m => {
     const x = m[0], enc = x.match(/<enclosure[^>]*url="([^"]+)"/);
@@ -126,14 +126,14 @@ async function api(req, res, url) {
   if (url.pathname === '/api/feeds') return send(200, Object.keys(FEEDS));
   if (url.pathname === '/api/feed') {
     const name = url.searchParams.get('name');
-    if (!FEEDS[name]) return send(404, { error: 'Programa desconhecido' });
+    if (!FEEDS[name]) return send(404, { error: 'Unknown programme' });
     try { return send(200, await getFeed(name)); } catch (e) { return send(502, { error: String(e.message || e) }); }
   }
   if (url.pathname === '/api/eval' && req.method === 'POST') {
-    if (!process.env.ANTHROPIC_API_KEY) return send(500, { error: 'Falta a chave ANTHROPIC_API_KEY no arquivo .env' });
+    if (!process.env.ANTHROPIC_API_KEY) return send(500, { error: 'The ANTHROPIC_API_KEY is missing from the .env file' });
     try {
       const { task, payload } = JSON.parse(await readBody(req));
-      if (!TASKS[task]) return send(400, { error: 'Tarefa desconhecida' });
+      if (!TASKS[task]) return send(400, { error: 'Unknown task' });
       const t = TASKS[task](payload || {});
       const text = await claude({ model: EVAL_MODEL, system: t.system, messages: [{ role: 'user', content: t.user }], max_tokens: t.max });
       return send(200, parseJson(text));
@@ -150,13 +150,13 @@ async function handleApi(req, res) {
   // Senha de acesso (opcional): protege o gasto da sua chave se o app estiver na internet
   if (process.env.APP_PASSWORD && url.pathname !== '/api/health' && req.headers['x-app-password'] !== process.env.APP_PASSWORD) {
     res.writeHead(401, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ error: 'Senha de acesso incorreta ou ausente.', auth: true }));
+    return res.end(JSON.stringify({ error: 'Wrong or missing app password.', auth: true }));
   }
   if (url.pathname !== '/api/chat') return api(req, res, url);
   if (req.method === 'POST') {
     if (!process.env.ANTHROPIC_API_KEY) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ error: 'Falta a chave ANTHROPIC_API_KEY no arquivo .env' }));
+      return res.end(JSON.stringify({ error: 'The ANTHROPIC_API_KEY is missing from the .env file' }));
     }
     try {
       const { messages, phase, tutorShare, interests, memory, sessionType } = JSON.parse(await readBody(req));

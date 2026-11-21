@@ -1,46 +1,46 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ajustes · English Course</title>
+<title>Settings · English Course</title>
 <link rel="stylesheet" href="common.css">
 <style>.dayrow{display:flex;gap:8px;align-items:center;margin:6px 0}.dayrow span{width:80px}</style>
 </head>
 <body>
 <div class="wrap">
-<h1>Ajustes</h1>
+<h1>Settings</h1>
 
-<h2>Aulas da semana</h2>
-<p class="hint">Marque os dias e a hora de cada aula (mínimo recomendado: 2 por semana).</p>
+<h2>Weekly lessons</h2>
+<p class="hint">Tick the days and set the time of each lesson (recommended minimum: 2 a week).</p>
 <div id="classes"></div>
 <p id="planNote" class="hint"></p>
 
-<h2>Avisos</h2>
-<label>Avisar antes da aula (minutos, separados por vírgula)</label><input type="text" id="leads" aria-label="Minutos de antecedência">
-<label>Aviso no dia anterior, às (deixe vazio para não usar)</label><input type="time" id="dayBefore">
-<label><input type="checkbox" id="secOn"> Segundo aviso se a aula não começou, após</label><input type="number" id="secH" min="1" max="12" style="width:90px"> horas
-<label>Escuta livre: dias</label><div id="listenDays" class="row"></div>
-<label>Hora da escuta livre</label><input type="time" id="listenT">
-<label>Tarefa de escrita: dia</label><select id="writeD"></select>
-<label>Hora do lembrete de escrita</label><input type="time" id="writeT">
-<label>Horário de silêncio (não envia avisos)</label><div class="row"><input type="time" id="qFrom"> até <input type="time" id="qTo"></div>
-<p><button id="perm">Ativar avisos neste navegador</button> <span class="hint" id="permNote"></span></p>
-<p class="hint">Os avisos funcionam enquanto a página estiver aberta. Para receber avisos com o app fechado, use o arquivo de calendário abaixo.</p>
+<h2>Reminders</h2>
+<label>Remind me before the lesson (minutes, comma-separated)</label><input type="text" id="leads" aria-label="Minutes in advance">
+<label>Reminder the day before, at (leave empty to skip)</label><input type="time" id="dayBefore">
+<label><input type="checkbox" id="secOn"> Second reminder if the lesson has not started, after</label><input type="number" id="secH" min="1" max="12" style="width:90px"> hours
+<label>Free listening: days</label><div id="listenDays" class="row"></div>
+<label>Free listening time</label><input type="time" id="listenT">
+<label>Writing task: day</label><select id="writeD"></select>
+<label>Writing reminder time</label><input type="time" id="writeT">
+<label>Quiet hours (no reminders are sent)</label><div class="row"><input type="time" id="qFrom"> to <input type="time" id="qTo"></div>
+<p><button id="perm">Turn on reminders in this browser</button> <span class="hint" id="permNote"></span></p>
+<p class="hint">Reminders work while this page is open. To be reminded when the app is closed, use the calendar file below.</p>
 
-<h2>Pausar o plano</h2>
-<div class="row"><input type="date" id="pFrom" aria-label="Início da pausa"><input type="date" id="pTo" aria-label="Fim da pausa"><button id="addPause">Adicionar pausa</button></div>
+<h2>Pause the plan</h2>
+<div class="row"><input type="date" id="pFrom" aria-label="Pause start"><input type="date" id="pTo" aria-label="Pause end"><button id="addPause">Add pause</button></div>
 <div id="pauses"></div>
 
-<h2>Professora</h2>
-<label>Velocidade da voz</label><input type="number" id="rate" min="0.6" max="1.4" step="0.1" style="width:100px">
-<label>Voz britânica</label><select id="voiceName"></select>
-<p><button id="test">Ouvir exemplo</button></p>
+<h2>Teacher</h2>
+<label>Voice speed</label><input type="number" id="rate" min="0.6" max="1.4" step="0.1" style="width:100px">
+<label>British voice</label><select id="voiceName"></select>
+<p><button id="test">Hear an example</button></p>
 
-<h2>Gasto da API</h2>
+<h2>API spending</h2>
 <div class="card" id="usage" class="muted">—</div>
 
-<div class="row" style="margin-top:20px"><button class="primary" id="save">Salvar</button><button id="ics">Exportar calendário (.ics)</button></div>
+<div class="row" style="margin-top:20px"><button class="primary" id="save">Save</button><button id="ics">Export calendar (.ics)</button></div>
 <p id="msg" class="okc"></p>
 </div>
 <script src="common.js"></script>
@@ -50,26 +50,26 @@ let s = EC.settings();
 const classes = document.getElementById('classes');
 const order = [1,2,3,4,5,6,0];
 function drawClasses(){
-  classes.innerHTML = order.map(d => `<div class="dayrow"><span>${EC.DAYS[d]}</span><input type="checkbox" data-d="${d}" ${s.classes[d]?'checked':''} aria-label="Aula na ${EC.DAYS[d]}"><input type="time" data-t="${d}" value="${s.classes[d]||'19:00'}" aria-label="Hora de ${EC.DAYS[d]}"></div>`).join('');
+  classes.innerHTML = order.map(d => `<div class="dayrow"><span>${EC.DAYS[d]}</span><input type="checkbox" data-d="${d}" ${s.classes[d]?'checked':''} aria-label="Lesson on ${EC.DAYS[d]}"><input type="time" data-t="${d}" value="${s.classes[d]||'19:00'}" aria-label="Time on ${EC.DAYS[d]}"></div>`).join('');
   listenDays.innerHTML = order.map(d => `<label style="margin:0"><input type="checkbox" data-l="${d}" ${s.listen.days.includes(d)?'checked':''}> ${EC.DAYS[d].slice(0,3)}</label>`).join('');
   writeD.innerHTML = order.map(d => `<option value="${d}" ${s.write.day===d?'selected':''}>${EC.DAYS[d]}</option>`).join('');
   classes.oninput = () => { collect(); note(); };
 }
 function note(){
   const p = EC.plan(EC.get('level', null), s);
-  planNote.innerHTML = `Com ${p.n} aula(s) por semana, o ciclo dura cerca de <b>${p.total} semanas</b> (até ${p.end.toLocaleDateString('pt-BR')}).` + (p.minimum ? '' : ' <span class="err">Abaixo do mínimo de 2 aulas por semana.</span>');
+  planNote.innerHTML = `With ${p.n} lesson(s) a week, the cycle lasts about <b>${p.total} weeks</b> (until ${p.end.toLocaleDateString('en-GB')}).` + (p.minimum ? '' : ' <span class="err">Below the minimum of 2 lessons a week.</span>');
 }
 function collect(){
   s.classes = {}; document.querySelectorAll('[data-d]').forEach(c => { if (c.checked) s.classes[c.dataset.d] = document.querySelector(`[data-t="${c.dataset.d}"]`).value || '19:00'; });
   s.listen.days = [...document.querySelectorAll('[data-l]')].filter(c=>c.checked).map(c=>+c.dataset.l);
 }
-function drawPauses(){ pauses.innerHTML = (s.pauses||[]).map((p,i)=>`<div class="row"><span>${p.from} → ${p.to}</span><button class="danger" data-rm="${i}">Remover</button></div>`).join(''); pauses.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { s.pauses.splice(+b.dataset.rm,1); drawPauses(); note(); }); }
+function drawPauses(){ pauses.innerHTML = (s.pauses||[]).map((p,i)=>`<div class="row"><span>${p.from} → ${p.to}</span><button class="danger" data-rm="${i}">Remove</button></div>`).join(''); pauses.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { s.pauses.splice(+b.dataset.rm,1); drawPauses(); note(); }); }
 function fill(){
   drawClasses(); note(); leads.value = s.leads.join(', '); dayBefore.value = s.dayBefore || ''; secOn.checked = s.second.on; secH.value = s.second.hours;
   listenT.value = s.listen.time; writeT.value = s.write.time; qFrom.value = s.quiet.from; qTo.value = s.quiet.to; rate.value = s.rate; drawPauses();
-  permNote.textContent = window.Notification ? 'Estado: ' + ({granted:'ativados',denied:'bloqueados',default:'não ativados'}[Notification.permission]) : 'Este navegador não suporta avisos.';
+  permNote.textContent = window.Notification ? 'Status: ' + ({granted:'on',denied:'blocked',default:'not turned on'}[Notification.permission]) : 'This browser does not support notifications.';
 }
-function voices(){ const v = speechSynthesis.getVoices().filter(x=>/en-GB/i.test(x.lang)); voiceName.innerHTML = '<option value="">Automática</option>' + v.map(x=>`<option ${s.voiceName===x.name?'selected':''}>${EC.esc(x.name)}</option>`).join(''); }
+function voices(){ const v = speechSynthesis.getVoices().filter(x=>/en-GB/i.test(x.lang)); voiceName.innerHTML = '<option value="">Automatic</option>' + v.map(x=>`<option ${s.voiceName===x.name?'selected':''}>${EC.esc(x.name)}</option>`).join(''); }
 speechSynthesis.onvoiceschanged = voices; voices();
 addPause.onclick = () => { if (pFrom.value && pTo.value && pTo.value >= pFrom.value) { s.pauses.push({ from:pFrom.value, to:pTo.value }); drawPauses(); note(); } };
 perm.onclick = async () => { if (window.Notification) { await Notification.requestPermission(); fill(); } };
@@ -79,12 +79,12 @@ function read(){
   s.second = { on: secOn.checked, hours: +secH.value || 2 }; s.listen.time = listenT.value || '18:00'; s.write = { day:+writeD.value, time: writeT.value || '18:00' };
   s.quiet = { from: qFrom.value || '22:00', to: qTo.value || '07:00' }; s.rate = +rate.value || 1; s.voiceName = voiceName.value;
 }
-save.onclick = () => { read(); if (!s.planStart) s.planStart = EC.today(); EC.set('settings', s); msg.textContent = 'Ajustes salvos.'; note(); };
+save.onclick = () => { read(); if (!s.planStart) s.planStart = EC.today(); EC.set('settings', s); msg.textContent = 'Settings saved.'; note(); };
 ics.onclick = () => { read(); const b = new Blob([EC.icsExport(s)], { type:'text/calendar' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'english-course.ics'; a.click(); };
 EC.api('/api/usage').then(u => {
   const m = new Date().toISOString().slice(0,7), d = u[m] || {};
-  const rows = Object.entries(d).map(([k,v]) => `<tr><td>${EC.esc(k)}</td><td>${v.calls} chamadas</td><td>${v.input} entrada / ${v.output} saída</td></tr>`).join('');
-  document.getElementById('usage').innerHTML = rows ? `<table>${rows}</table><p class="hint">Orçamento: US$ ${s.budget}/mês. Defina também esse limite no console da Anthropic.</p>` : '<p class="hint">Sem uso registrado neste mês. Orçamento: US$ ' + s.budget + '/mês.</p>';
+  const rows = Object.entries(d).map(([k,v]) => `<tr><td>${EC.esc(k)}</td><td>${v.calls} calls</td><td>${v.input} input / ${v.output} output tokens</td></tr>`).join('');
+  document.getElementById('usage').innerHTML = rows ? `<table>${rows}</table><p class="hint">Budget: US$ ${s.budget}/month. Also set this limit in the Anthropic console.</p>` : '<p class="hint">No usage recorded this month. Budget: US$ ' + s.budget + '/month.</p>';
 }).catch(()=>{});
 fill();
 </script>

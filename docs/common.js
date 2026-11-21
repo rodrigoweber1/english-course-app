@@ -12,18 +12,18 @@ const EC = {
     const r = await fetch(path, opts);
     const d = await r.json().catch(() => ({}));
     if (r.status === 401 && d.auth && !retried) {
-      const p = prompt('Senha de acesso ao app:');
+      const p = prompt('App password:');
       if (p) { try { localStorage.setItem('ec_pw', p); } catch {} return EC.api(path, body, true); }
     }
-    if (!r.ok && !d.error && (r.status === 404 || r.status === 405)) throw new Error('Esta função precisa do servidor local: abra o app com iniciar.bat (localhost:3000).');
-    if (!r.ok) throw new Error(d.error || 'Erro ' + r.status);
+    if (!r.ok && !d.error && (r.status === 404 || r.status === 405)) throw new Error('This feature needs the local server: start the app with iniciar.bat (localhost:3000).');
+    if (!r.ok) throw new Error(d.error || 'Error ' + r.status);
     return d;
   },
   evaluate(task, payload){ return EC.api('/api/eval', { task, payload }); },
 
   nav(active){
-    const items = [['index.html','Aula'],['prova.html','Prova de nível'],['plano.html','Plano'],['biblioteca.html','Biblioteca'],['escuta.html','Escuta'],['escrita.html','Escrita'],['interesses.html','Interesses'],['ajustes.html','Ajustes']];
-    const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Menu principal');
+    const items = [['index.html','Lesson'],['prova.html','Placement test'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['interesses.html','Interests'],['ajustes.html','Settings']];
+    const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Main menu');
     n.innerHTML = items.map(([h,t]) => `<a href="${h}" ${h===active?'class="on" aria-current="page"':''}>${t}</a>`).join('');
     document.body.prepend(n);
   },
@@ -42,11 +42,11 @@ const EC = {
   listen(){
     return new Promise((resolve, reject) => {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) return reject(new Error('Este navegador não tem reconhecimento de voz. Use Chrome ou Edge.'));
+      if (!SR) return reject(new Error('This browser has no speech recognition. Please use Chrome or Edge.'));
       const r = new SR(); r.lang = 'en-GB'; r.interimResults = false; r.maxAlternatives = 1;
       let out = { text:'', confidence:1 };
       r.onresult = e => { out = { text: e.results[0][0].transcript, confidence: e.results[0][0].confidence }; };
-      r.onerror = e => { if (e.error !== 'no-speech') reject(new Error('Microfone: ' + e.error)); };
+      r.onerror = e => { if (e.error !== 'no-speech') reject(new Error('Microphone: ' + e.error)); };
       r.onend = () => resolve(out);
       r.start();
     });
@@ -116,7 +116,7 @@ EC.memoryText = function(){
 EC.sessionType = function(){ const s = EC.settings(), days = Object.keys(s.classes).map(Number).sort((a,b)=>a-b), i = days.indexOf(new Date().getDay()); return EC.TYPES[(i < 0 ? 0 : i) % 3]; };
 
 // ---------- Plano de estudos (seção 4.1) e ajustes (8.2) ----------
-EC.DAYS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+EC.DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 EC.defaults = () => ({
   classes: { 1:'08:00', 3:'19:30', 5:'13:00' },            // dia da semana (0=dom) -> hora
   leads: [15], dayBefore: null,                              // avisos em minutos antes; ou 'HH:MM' do dia anterior
@@ -127,16 +127,16 @@ EC.defaults = () => ({
 });
 EC.settings = () => ({ ...EC.defaults(), ...EC.get('settings', {}) });
 EC.PHASES = [
-  { id:0, name:'Fase prévia: chegar ao B2', weeks:28 },
-  { id:1, name:'Fase 1: consolidar B2 alto', weeks:16 },
-  { id:2, name:'Fase 2: passo ao C1', weeks:16 },
-  { id:3, name:'Fase 3: C1 consolidado', weeks:16 },
+  { id:0, name:'Bridge phase: reach B2', weeks:28 },
+  { id:1, name:'Phase 1: consolidate upper B2', weeks:16 },
+  { id:2, name:'Phase 2: step up to C1', weeks:16 },
+  { id:3, name:'Phase 3: consolidated C1', weeks:16 },
 ];
-EC.TYPES = ['Conversa ou debate','Escuta intensiva','Role-play e repaso'];
+EC.TYPES = ['Conversation or debate','Intensive listening','Role-play and review'];
 // Calcula o plano a partir do nível e do número de aulas por semana
 EC.plan = function(level, settings){
   const s = settings || EC.settings(), n = Object.keys(s.classes).length;
-  const lv = (level?.overall || 'B2 alto');
+  const lv = (level?.overall || 'B2+');
   let list;
   if (/^B1/.test(lv)) list = [0,1,2,3]; else if (/^B2$/.test(lv)) list = [1,2,3]; else if (/^(C1|C2)/.test(lv)) list = [3]; else list = [1,2,3];
   const factor = n >= 4 ? .85 : n === 3 ? 1 : n === 2 ? 65/48 : 2;
@@ -155,7 +155,7 @@ EC.weekNow = function(plan, settings){
 };
 EC.icsExport = function(settings){
   const s = settings || EC.settings(), pad = n => String(n).padStart(2,'0');
-  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//English Course//PT'];
+  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//English Course//EN'];
   const days = ['SU','MO','TU','WE','TH','FR','SA'];
   const add = (title, day, time, mins) => {
     const d = new Date(); d.setDate(d.getDate() + ((day - d.getDay() + 7) % 7));
@@ -165,9 +165,9 @@ EC.icsExport = function(settings){
     for (const l of s.leads) out.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${title}`, `TRIGGER:-PT${l}M`, 'END:VALARM');
     out.push('END:VEVENT');
   };
-  Object.entries(s.classes).forEach(([d,t]) => add('English Course: aula (30 min)', +d, t, 30));
-  (s.listen.days || []).forEach(d => add('English Course: escuta livre (20 min)', d, s.listen.time, 20));
-  add('English Course: tarefa de escrita (30 min)', s.write.day, s.write.time, 30);
+  Object.entries(s.classes).forEach(([d,t]) => add('English Course: lesson (30 min)', +d, t, 30));
+  (s.listen.days || []).forEach(d => add('English Course: free listening (20 min)', d, s.listen.time, 20));
+  add('English Course: writing task (30 min)', s.write.day, s.write.time, 30);
   out.push('END:VCALENDAR');
   return out.join('\r\n');
 };
@@ -179,16 +179,16 @@ EC.checkReminders = function(){
   const s = EC.settings(), now = new Date(), fired = EC.get('fired', {}), today = EC.today();
   if (EC.inQuiet(s.quiet, now)) return;
   for (const p of s.pauses || []) if (today >= p.from && today <= p.to) return;
-  const type = EC.TYPES[[1,3,5].indexOf(now.getDay())] || 'Conversa';
+  const type = EC.TYPES[[1,3,5].indexOf(now.getDay())] || 'Conversation';
   const fire = (key, t, b) => { if (!fired[key]) { fired[key] = 1; EC.notify(t, b); } };
   const mins = (hhmm) => { const [h,m] = hhmm.split(':').map(Number); return h*60+m; };
   const nowM = now.getHours()*60 + now.getMinutes();
   const t = s.classes[now.getDay()];
-  if (t) for (const l of s.leads) if (nowM === mins(t) - l) fire(today+'a'+l, 'English Course', `Em ${l} min: ${type}, 30 minutos.`);
-  if (t && s.second.on && nowM === mins(t) + s.second.hours*60 && !EC.get('sessions', []).some(x => x.date === today)) fire(today+'b', 'English Course', 'Você ainda não começou a aula de hoje. Quer fazê-la agora?');
-  if ((s.listen.days || []).includes(now.getDay()) && nowM === mins(s.listen.time)) fire(today+'l', 'English Course', 'Hoje é dia de escuta livre (20 min).');
-  if (s.write.day === now.getDay() && nowM === mins(s.write.time)) fire(today+'w', 'English Course', 'Hora da tarefa de escrita da semana.');
-  if (now.getDay() === 0 && nowM === 20*60) fire(today+'s', 'English Course', 'Resumo da semana: confira seu plano.');
+  if (t) for (const l of s.leads) if (nowM === mins(t) - l) fire(today+'a'+l, 'English Course', `In ${l} min: ${type}, 30 minutes.`);
+  if (t && s.second.on && nowM === mins(t) + s.second.hours*60 && !EC.get('sessions', []).some(x => x.date === today)) fire(today+'b', 'English Course', "You haven't started today's lesson yet. Shall we do it now?");
+  if ((s.listen.days || []).includes(now.getDay()) && nowM === mins(s.listen.time)) fire(today+'l', 'English Course', 'Today is a free-listening day (20 min).');
+  if (s.write.day === now.getDay() && nowM === mins(s.write.time)) fire(today+'w', 'English Course', "Time for this week's writing task.");
+  if (now.getDay() === 0 && nowM === 20*60) fire(today+'s', 'English Course', 'Weekly summary: check your plan.');
   EC.set('fired', fired);
 };
 setInterval(EC.checkReminders, 30000);
