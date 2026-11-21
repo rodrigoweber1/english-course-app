@@ -1,0 +1,7 @@
+{
+  "name": "english-course",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "start": "node servidor.js" },
+  "engines": { "node": ">=20" }
+}

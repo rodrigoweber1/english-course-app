@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>English Course</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  :root{
+    --bg:#F8FAFC; --fg:#0F172A; --card:#FFFFFF; --muted:#475569; --border:#CBD5E1;
+    --primary:#2563EB; --on-primary:#FFFFFF; --accent:#C2410C; --tutor:#EFF6FF; --danger:#DC2626; --ok:#15803D;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#0B1220; --fg:#E2E8F0; --card:#111A2E; --muted:#A3B1C6; --border:#26334D; --primary:#3B82F6; --tutor:#14233F; --accent:#FB923C; --ok:#4ADE80}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
+  header{padding:10px 16px;border-bottom:1px solid var(--border);background:var(--card)}
+  .top{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  h1{font-size:18px;margin:0}
+  .clock{font-variant-numeric:tabular-nums;font-weight:600}
+  .phases{max-width:720px;margin:8px auto 0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;list-style:none;padding:0}
+  .phases li{font-size:11px;text-align:center;padding:6px 1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:8px;border:1px solid var(--border);color:var(--muted)}
+  .phases li.done{color:var(--ok);border-color:var(--ok)}
+  .phases li.on{background:var(--primary);border-color:var(--primary);color:var(--on-primary);font-weight:600}
+  .meter{max-width:720px;margin:8px auto 0;font-size:13px;color:var(--muted)}
+  .track{height:8px;border-radius:4px;background:var(--tutor);overflow:hidden;display:flex;margin-top:4px;border:1px solid var(--border)}
+  .track .u{background:var(--primary);width:0%;transition:width .3s}
+  .track .t{background:var(--accent);flex:1}
+  main{flex:1;width:100%;max-width:720px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+  .msg{max-width:85%;padding:10px 14px;border-radius:14px;border:1px solid var(--border);background:var(--card)}
+  .msg.tutor{align-self:flex-start;background:var(--tutor)}
+  .msg.user{align-self:flex-end}
+  .msg .who{font-size:12px;color:var(--muted);margin-bottom:2px}
+  .msg.interim{opacity:.6;font-style:italic}
+  footer{border-top:1px solid var(--border);padding:12px 16px;background:var(--card)}
+  .bar{max-width:720px;margin:0 auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  input[type=text]{flex:1;min-width:140px;min-height:44px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--fg);font:inherit}
+  button{min-height:44px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;cursor:pointer;transition:background .15s,opacity .15s;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+  button:hover:not(:disabled){background:var(--tutor)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary);font-weight:600}
+  button.primary:hover:not(:disabled){background:var(--primary);opacity:.9}
+  button.rec{background:var(--danger);border-color:var(--danger);color:#fff}
+  svg{width:18px;height:18px;flex:none}
+  :focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+  .status{max-width:720px;margin:0 auto 8px;font-size:14px;color:var(--muted);min-height:21px}
+  .status.err{color:var(--danger)}
+  .hint{font-size:14px;color:var(--muted)}
+  .row2{max-width:720px;margin:8px auto 0;display:flex;gap:8px;flex-wrap:wrap}
+  #longbox{display:none;max-width:720px;margin:0 auto 8px;padding:10px 14px;border:2px solid var(--accent);border-radius:10px;font-weight:600}
+  #longbox span{font-variant-numeric:tabular-nums;font-size:20px}
+  #start,#summary{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;z-index:5}
+  #summary{display:none}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:440px;width:100%}
+  .card h2{margin-top:0}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="start"><div class="card">
+  <h2>Aula com a Emma</h2>
+  <p>Aula de 30 minutos em 5 fases. Você fala, a Emma ouve e responde com perguntas curtas. As correções vêm no relatório final.</p>
+  <p class="hint">Use Chrome ou Edge e permita o microfone. Você pode escrever se preferir.</p>
+  <p id="intNote" class="hint"></p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="primary" id="go">Começar aula</button>
+    <button onclick="location.href='interesses.html'" id="intBtn">Meus interesses</button>
+  </div>
+</div></div>
+
+<div id="summary"><div class="card">
+  <h2>Aula encerrada</h2>
+  <div id="sumbody"></div>
+  <p class="hint">O relatório completo de feedback (erros, pronúncia, vocabulário) vem na próxima fase do app.</p>
+  <button class="primary" onclick="location.reload()">Nova aula</button>
+</div></div>
+
+<header>
+  <div class="top">
+    <h1>English Course</h1>
+    <div><span class="clock" id="clock">00:00</span> / 30:00</div>
+    <label class="hint"><input type="checkbox" id="voiceOut" checked> Voz da Emma</label>
+  </div>
+  <ol class="phases" id="phases"></ol>
+  <div class="meter">
+    <div>Tempo de fala — você <b id="uPct">0%</b> · Emma <b id="tPct">0%</b> (meta: 80/20)</div>
+    <div class="track"><div class="u" id="uBar"></div><div class="t"></div></div>
+  </div>
+</header>
+
+<main id="chat" aria-live="polite"></main>
+
+<footer>
+  <div id="longbox" role="timer">Turno longo — fale sem pausas: <span id="longclock">1:30</span></div>
+  <div class="status" id="status"></div>
+  <div class="bar">
+    <button id="mic" class="primary" aria-label="Falar (microfone)"></button>
+    <input type="text" id="text" placeholder="Ou escreva aqui…" aria-label="Escrever mensagem">
+    <button id="send">Enviar</button>
+  </div>
+  <div class="row2">
+    <button id="longBtn">Turno longo (1:30)</button>
+    <button id="next">Próxima fase</button>
+    <button id="end">Encerrar aula</button>
+  </div>
+</footer>
+
+<script src="common.js"></script>
+<script>
+EC.nav('index.html');
+const PHASES = [
+  { key:'warmup',  name:'Aquecimento',  min:3 },
+  { key:'input',   name:'Input',        min:6 },
+  { key:'guided',  name:'Conversa',     min:16 },
+  { key:'grammar', name:'Gramática',    min:4 },
+  { key:'closing', name:'Fechamento',   min:1 },
+];
+const LONG_SECONDS = 90;
+const ICON_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>';
+const ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+
+const $ = id => document.getElementById(id);
+const chat = $('chat'), statusEl = $('status'), micBtn = $('mic'), textEl = $('text');
+const history = [];
+let phase = 0, busy = false, listening = false, rec = null, britishVoice = null;
+let startedAt = 0, userMs = 0, tutorMs = 0, micStart = 0, clockTimer = null;
+let longMode = false, longTimer = null; const lowConf = [];
+
+function setStatus(t, err){ statusEl.textContent = t || ''; statusEl.className = 'status' + (err ? ' err' : ''); }
+function addMsg(who, text, cls=''){
+  const d = document.createElement('div');
+  d.className = 'msg ' + who + ' ' + cls;
+  const w = document.createElement('div'); w.className = 'who'; w.textContent = who === 'tutor' ? 'Emma' : 'Você';
+  const p = document.createElement('div'); p.textContent = text;
+  d.append(w, p); chat.append(d); chat.scrollTop = chat.scrollHeight; return d;
+}
+const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0');
+
+// Barra de fases
+function renderPhases(){
+  $('phases').innerHTML = PHASES.map((p,i) => `<li class="${i<phase?'done':i===phase?'on':''}">${i+1}. ${p.name}</li>`).join('');
+}
+function phaseTargetEnd(i){ return PHASES.slice(0,i+1).reduce((a,p)=>a+p.min,0)*60; }
+
+// Relógio e medidor 80/20
+function tick(){
+  const el = (Date.now() - startedAt)/1000;
+  $('clock').textContent = fmt(el);
+  const live = listening ? Date.now() - micStart : 0;
+  const u = userMs + live, tot = u + tutorMs;
+  const up = tot ? Math.round(u/tot*100) : 0;
+  $('uPct').textContent = up + '%'; $('tPct').textContent = (tot ? 100-up : 0) + '%';
+  $('uBar').style.width = (tot ? up : 0) + '%';
+  if (phase < PHASES.length-1 && el > phaseTargetEnd(phase) + 30) setStatus('Já passou do tempo desta fase. Clique em "Próxima fase" quando quiser.');
+}
+function tutorShare(){ const t = userMs + tutorMs; return t > 20000 ? tutorMs/t : 0; }
+
+// Voz britânica do sistema
+function pickVoice(){
+  const v = speechSynthesis.getVoices();
+  britishVoice = v.find(x => /en-GB/i.test(x.lang) && /female|sonia|libby|hazel|google uk english female/i.test(x.name)) || v.find(x => /en-GB/i.test(x.lang)) || null;
+}
+speechSynthesis.onvoiceschanged = pickVoice; pickVoice();
+
+function speak(text){
+  return new Promise(res => {
+    if (!$('voiceOut').checked) return res();
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-GB'; if (britishVoice) u.voice = britishVoice;
+    const t0 = Date.now();
+    u.onend = u.onerror = () => { tutorMs += Date.now() - t0; res(); };
+    speechSynthesis.speak(u);
+  });
+}
+
+async function ask(phaseKey){
+  if (busy) return;
+  busy = true; setStatus('Emma está pensando…');
+  try {
+    const data = await EC.api('/api/chat', { messages: history, interests: interestsText(), memory: EC.memoryText(), sessionType: EC.sessionType(), phase: phaseKey || PHASES[phase].key, tutorShare: tutorShare() });
+    history.push({ role:'assistant', content:data.text });
+    addMsg('tutor', data.text); setStatus('');
+    busy = false;
+    await speak(data.text);
+  } catch(e){ setStatus(e.message, true); history.pop(); }
+  busy = false;
+}
+
+function send(t, phaseKey){
+  t = t.trim(); if (!t) return;
+  addMsg('user', t); textEl.value = '';
+  history.push({ role:'user', content:t });
+  ask(phaseKey);
+}
+$('send').onclick = () => send(textEl.value);
+textEl.addEventListener('keydown', e => { if (e.key === 'Enter') send(textEl.value); });
+
+// Reconhecimento de voz
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+micBtn.innerHTML = ICON_MIC + ' Falar';
+if (!SR) { micBtn.disabled = true; $('longBtn').disabled = true; setStatus('Este navegador não tem reconhecimento de voz. Use Chrome ou Edge, ou escreva.', true); }
+else {
+  rec = new SR(); rec.lang = 'en-GB'; rec.interimResults = true; rec.continuous = true;
+  let finalText = '', interimEl = null;
+  rec.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++){
+      if (e.results[i].isFinal) { finalText += e.results[i][0].transcript + ' '; if (e.results[i][0].confidence < 0.7) lowConf.push(e.results[i][0].transcript.trim()); } else interim += e.results[i][0].transcript;
+    }
+    if (!interimEl) interimEl = addMsg('user', '', 'interim');
+    interimEl.lastChild.textContent = finalText + interim;
+  };
+  rec.onend = () => {
+    if (listening) userMs += Date.now() - micStart;
+    listening = false; micBtn.classList.remove('rec'); micBtn.innerHTML = ICON_MIC + ' Falar';
+    if (interimEl) interimEl.remove(); interimEl = null;
+    const t = finalText.trim(); finalText = '';
+    const wasLong = longMode; endLongUI();
+    if (t) send(t, wasLong ? 'longturn' : undefined); else setStatus('');
+  };
+  rec.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') setStatus('Microfone: ' + e.error, true); };
+  micBtn.onclick = () => {
+    if (listening) { rec.stop(); return; }
+    startListening();
+  };
+}
+function startListening(){
+  speechSynthesis.cancel();
+  try { rec.start(); listening = true; micStart = Date.now(); micBtn.classList.add('rec'); micBtn.innerHTML = ICON_STOP + ' Parar'; setStatus('Ouvindo… clique em Parar quando terminar.'); } catch {}
+}
+
+// Turno longo cronometrado (a Emma fica em silêncio)
+function endLongUI(){ longMode = false; clearInterval(longTimer); $('longbox').style.display = 'none'; $('longBtn').disabled = !SR; }
+$('longBtn').onclick = () => {
+  if (!rec || listening || busy) return;
+  longMode = true; $('longBtn').disabled = true; $('longbox').style.display = 'block';
+  let left = LONG_SECONDS; $('longclock').textContent = fmt(left).slice(1);
+  longTimer = setInterval(() => {
+    left--; $('longclock').textContent = fmt(Math.max(left,0)).slice(1);
+    if (left <= 0) { clearInterval(longTimer); if (listening) rec.stop(); }
+  }, 1000);
+  startListening(); setStatus('Turno longo: a Emma não vai interromper.');
+};
+
+// Fases e fim da aula
+$('next').onclick = () => {
+  if (busy || listening) return;
+  if (phase >= PHASES.length-1) return;
+  phase++; renderPhases(); setStatus('');
+  history.push({ role:'user', content:'(Let us move on to the next part of the lesson.)' });
+  ask();
+  if (phase === PHASES.length-1) $('next').disabled = true;
+};
+$('end').onclick = async () => {
+  speechSynthesis.cancel(); if (listening) rec.stop();
+  clearInterval(clockTimer);
+  const el = (Date.now() - startedAt)/1000, tot = userMs + tutorMs, up = tot ? Math.round(userMs/tot*100) : 0;
+  const userMsgs = history.filter(m => m.role === 'user' && !m.content.startsWith('(') && !m.content.startsWith('Hello! Please'));
+  const words = userMsgs.reduce((a,m) => a + m.content.split(/\s+/).length, 0);
+  const metrics = { minutes: +(el/60).toFixed(1), userPct: up, tutorPct: tot ? 100-up : 0, userWords: words, wpm: userMs > 5000 ? Math.round(words / (userMs/60000)) : null, avgTurnWords: userMsgs.length ? Math.round(words/userMsgs.length) : 0, turns: userMsgs.length };
+  const sid = 'aula-' + EC.today() + '-' + Date.now();
+  const log = EC.get('sessions', []); log.push({ id:sid, date: EC.today(), minutes: metrics.minutes, userMin: +(userMs/60000).toFixed(1), userPct: up, wpm: metrics.wpm, type: PHASES[phase].name }); EC.set('sessions', log);
+  $('sumbody').innerHTML = `<p>Duração: <b>${fmt(el)}</b><br>Você falou: <b>${up}%</b> · Emma: <b>${tot ? 100-up : 0}%</b>${metrics.wpm ? `<br>Palavras por minuto: <b>${metrics.wpm}</b>` : ''}</p><p class="hint" id="repst">Gerando relatório…</p><div id="rep"></div>
+  <p>Gostou do tema de hoje? <button id="up" aria-label="Gostei">👍</button> <button id="down" aria-label="Não gostei">👎</button></p>`;
+  $('summary').style.display = 'flex';
+  const rate = v => { const t = EC.get('topicRatings', []); t.push({ date: EC.today(), v, interests: interestsText() }); EC.set('topicRatings', t); $('up').disabled = $('down').disabled = true; };
+  $('up').onclick = () => rate(1); $('down').onclick = () => rate(-1);
+  if (userMsgs.length < 2) { $('repst').textContent = 'Poucas falas para gerar relatório.'; return; }
+  try {
+    const r = await EC.evaluate('report', { transcript: history, metrics, lowConfidence: lowConf.slice(0, 30) });
+    EC.addErrors(r.errors, sid); EC.addVocab(r.vocab); EC.addCards(r.grammar_cards);
+    const cu = EC.get('c1used', {}); (r.c1_used || []).forEach(x => cu[x] = EC.today()); EC.set('c1used', cu);
+    // Expressões usadas bem sem ajuda contam para "dominada" (3 sessões distintas)
+    const used = new Set(userMsgs.map(m => m.content.toLowerCase()).join(' ').split(/\W+/)); const vb = EC.get('vocab', []);
+    vb.forEach(v => { if (v.lastSession !== sid && v.term.toLowerCase().split(/\s+/).every(w => used.has(w))) { v.uses = (v.uses||0) + 1; v.lastSession = sid; } }); EC.set('vocab', vb);
+    const top = new Set(r.top3 || []);
+    $('repst').textContent = '';
+    $('rep').innerHTML = `<p>${EC.esc(r.summary)}</p>
+      <h3>Erros principais</h3>${(r.errors||[]).map((e,i)=>`<p>${top.has(i)?'★ ':''}${EC.diffHtml(e.original,e.correction)}<br><span class="hint">${EC.esc(e.explanation)}</span></p>`).join('') || '<p class="hint">Nenhum.</p>'}
+      <h3>O que foi bem</h3><p>${(r.good||[]).map(EC.esc).join(' · ') || '—'}</p>
+      <h3>Pronúncia</h3><p>${(r.pronunciation||[]).map(EC.esc).join('<br>') || '—'}</p>
+      <h3>Vocabulário novo</h3><p>${(r.vocab||[]).map(v=>EC.esc(v.term)).join(' · ') || '—'}</p>
+      <h3>Próxima aula</h3><p>${EC.esc(r.next)}</p><p class="hint">Vocabulário, erros e cartões foram guardados na <a href="biblioteca.html">Biblioteca</a>.</p>`;
+  } catch(e){ $('repst').textContent = 'Não foi possível gerar o relatório: ' + e.message; }
+};
+EC.loadC1();
+$('go').onclick = () => {
+  $('start').style.display = 'none';
+  startedAt = Date.now(); renderPhases(); clockTimer = setInterval(tick, 500);
+  history.push({ role:'user', content:'Hello! Please start our lesson.' });
+  ask();
+};
+// Interesses do questionário (guardados neste navegador)
+function loadInterests(){ try { return JSON.parse(localStorage.getItem('ec_interests') || 'null'); } catch { return null; } }
+function interestsText(){
+  const d = loadInterests(); if (!d) return '';
+  return Object.entries(d.picks || {}).filter(([,v]) => v.length).map(([k,v]) => k + ': ' + v.join(', ')).join('. ');
+}
+$('intNote').textContent = loadInterests() ? 'Seus interesses estão salvos. A Emma vai usá-los.' : 'Dica: responda o questionário de interesses para a Emma escolher temas do seu gosto.';
+if (!loadInterests()) $('intBtn').classList.add('primary'), $('go').classList.remove('primary');
+renderPhases();
+</script>
+</body>
+</html>

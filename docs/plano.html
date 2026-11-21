@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plano · English Course</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script src="common.js"></script>
+<script>
+EC.nav('plano.html');
+const app = document.getElementById('app');
+const level = EC.get('level', null), s = EC.settings();
+const sessions = EC.get('sessions', []), vocab = EC.get('vocab', []), cards = EC.get('cards', []);
+const hist = EC.get('level_history', []);
+const fmt = d => d.toLocaleDateString('pt-BR');
+let html = '<h1>Meu plano</h1>';
+
+if (!level) {
+  html += `<div class="card"><p>Ainda não há resultado da prova de nível. O plano depende dela (B1 avançado, B2, B2 alto ou C1).</p><a class="btn primary" href="prova.html">Fazer a prova de nível</a></div>
+  <p class="hint">Enquanto isso, mostro o plano padrão de 48 semanas para B2 alto.</p>`;
+}
+const p = EC.plan(level, s);
+const wk = Math.min(p.total, EC.weekNow(p, s));
+html += `<div class="card"><b>Nível inicial:</b> ${EC.esc(level?.overall || 'B2 alto (padrão)')}${level?.external ? ' · teste externo: ' + EC.esc(level.external) : ''}<br>
+<b>Ciclo:</b> ${p.total} semanas, de ${fmt(p.start)} a ${fmt(p.end)}${p.paused ? ` (inclui ${p.paused} dias de pausa)` : ''}<br>
+<b>Agora:</b> semana ${wk} de ${p.total}
+<div class="bar" style="margin-top:8px"><i style="width:${wk/p.total*100}%"></i></div>
+${p.minimum ? '' : '<p class="err">Você tem menos de 2 aulas por semana. O ciclo foi alongado.</p>'}
+${!s.planStart ? '<p class="hint">Salve seus ajustes para fixar a data de início.</p>' : ''}</div>`;
+
+// Fases
+let acc = 0;
+html += '<h2>Fases</h2><table>' + p.phases.map(ph => { const a = acc + 1, b = acc + ph.weeks; acc = b; const cur = wk >= a && wk <= b; return `<tr><td>${cur ? '<b>▶ ' : ''}${EC.esc(ph.name)}${cur ? '</b>' : ''}</td><td>semanas ${a}–${b}</td></tr>`; }).join('') + '</table>';
+
+// Esta semana
+const days = [1,2,3,4,5,6,0];
+const today = new Date().getDay();
+html += '<h2>Esta semana</h2><table>';
+let ci = 0;
+for (const d of days) {
+  const t = s.classes[d], items = [];
+  if (t) items.push(`Aula ${t} · ${EC.TYPES[ci++ % 3]}`);
+  if ((s.listen.days || []).includes(d)) items.push(`Escuta livre ${s.listen.time}`);
+  if (s.write.day === d) items.push(`Escrita ${s.write.time}`);
+  html += `<tr><td>${d === today ? '<b>' : ''}${EC.DAYS[d]}${d === today ? '</b>' : ''}</td><td>${items.join(' · ') || '<span class="muted">descanso</span>'}</td></tr>`;
+}
+html += '</table>';
+
+// Pruebas intermedias (semanas 8,16,24,32,40 do ciclo padrão)
+const offset = p.phases[0].id === 0 ? p.phases[0].weeks : 0;
+html += '<h2>Próximas provas</h2><p class="hint">Provas intermediárias nas semanas 8, 16, 24, 32 e 40 do ciclo, e uma avaliação final.</p><p>' + [8,16,24,32,40].map(w => { const wv = w + offset; return `<span class="pill">Semana ${wv}${wk >= wv ? ' ✓' : ''}</span>`; }).join(' ') + '</p>';
+
+// Progresso
+const minutes = sessions.reduce((a,x)=>a+(x.minutes||0),0), spoken = sessions.reduce((a,x)=>a+(x.userMin||0),0);
+const mastered = vocab.filter(v => (v.uses||0) >= 3).length;
+const thisWeek = sessions.filter(x => (new Date() - new Date(x.date)) / 864e5 < 7).length;
+html += `<h2>Progresso</h2><div class="card"><table>
+<tr><td>Aulas feitas</td><td>${sessions.length} (esta semana: ${thisWeek})</td></tr>
+<tr><td>Minutos de aula / falados por você</td><td>${Math.round(minutes)} / ${Math.round(spoken)}</td></tr>
+<tr><td>Expressões em aprendizado / dominadas</td><td>${vocab.length - mastered} / ${mastered}</td></tr>
+<tr><td>Cartões de gramática</td><td>${cards.length}</td></tr>
+<tr><td>Inventário C1 que você já usa</td><td>${EC.c1Status().pct}%</td></tr>
+<tr><td>Erros persistentes</td><td>${EC.persistentErrors().length}</td></tr>
+<tr><td>Escuta externa registrada</td><td>${EC.get('outside', []).reduce((a,x)=>a+x.min,0)} min</td></tr></table>
+${hist.length ? '<p><b>Evolução do nível:</b> ' + hist.map(h => `${fmt(new Date(h.date))}: ${EC.esc(h.overall)}`).join(' → ') + '</p>' : ''}</div>
+<div class="row"><a class="btn" href="ajustes.html">Mudar dias e avisos</a><a class="btn" href="prova.html">Prova de nível</a></div>`;
+app.innerHTML = html;
+</script>
+</body>
+</html>

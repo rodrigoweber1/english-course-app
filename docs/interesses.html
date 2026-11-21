@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interesses · English Course</title>
+<style>
+  :root{--bg:#F8FAFC;--fg:#0F172A;--card:#FFFFFF;--muted:#475569;--border:#CBD5E1;--primary:#2563EB;--on-primary:#FFFFFF;--tint:#EFF6FF}
+  @media (prefers-color-scheme: dark){:root{--bg:#0B1220;--fg:#E2E8F0;--card:#111A2E;--muted:#A3B1C6;--border:#26334D;--primary:#3B82F6;--tint:#14233F}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+  main{max-width:720px;margin:0 auto;padding:16px 16px 96px}
+  h1{font-size:22px;margin:8px 0}
+  h2{font-size:17px;margin:24px 0 4px}
+  p{margin:4px 0 12px;color:var(--muted)}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opts label{position:relative;cursor:pointer}
+  .opts input{position:absolute;opacity:0;inset:0;cursor:pointer}
+  .opts span{display:inline-block;min-height:44px;line-height:42px;padding:0 16px;border:1px solid var(--border);border-radius:22px;background:var(--card);transition:background .15s,border-color .15s}
+  .opts input:checked + span{background:var(--primary);color:var(--on-primary);border-color:var(--primary);font-weight:600}
+  .opts input:focus-visible + span{outline:3px solid var(--primary);outline-offset:2px}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--border);padding:12px 16px}
+  .bar div{max-width:720px;margin:0 auto;display:flex;gap:8px;justify-content:space-between;align-items:center}
+  button,a.btn{min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;cursor:pointer;display:inline-flex;align-items:center;text-decoration:none}
+  button.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary);font-weight:600}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  :focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+  .step{font-size:13px;color:var(--muted)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div class="bar"><div>
+  <button id="back">Voltar</button>
+  <span class="step" id="step"></span>
+  <button class="primary" id="next">Continuar</button>
+</div></div>
+
+<script>
+const KEY = 'ec_interests';
+// Áreas gerais e perguntas concretas de cada área (seção 2.1 da especificação)
+const AREAS = {
+  'Atualidade': ['Política e sociedade','Tecnologia e ciência','Meio ambiente','Saúde e bem-estar','Educação'],
+  'Economia e negócios': ['Vendas e negociação','Liderança e carreira profissional','Empreendedorismo','Finanças pessoais','Marketing'],
+  'Música': ['Rock e pop britânico','Música brasileira e latina (entrevistas e documentários em inglês)','Jazz e clássica','Música eletrônica','Hip-hop'],
+  'Cinema e séries': ['Drama e thriller','Documentários','Comédia','Ficção científica','Séries britânicas'],
+  'Esporte': ['Tênis','Corrida e ciclismo','Futebol','Fórmula 1','Academia e fitness'],
+  'Outros temas de lazer': ['Viagens','Gastronomia','Livros','Fotografia','Videogames'],
+};
+const FIXED = {
+  'Tipo de áudio preferido': ['Entrevistas e debates','Histórias narradas','Divulgação científica e cultural','Humor e comédia'],
+  'Situações para role-play': ['Reuniões de trabalho','Conversa social e networking','Debates de opinião','Entrevista de emprego','Negociação'],
+};
+const areaNames = Object.keys(AREAS);
+let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch {}
+let state = { areas: saved.areas || [], picks: saved.picks || {} };
+let step = 0; // 0 = áreas, 1 = detalhes, 2 = resumo
+
+const app = document.getElementById('app'), nextB = document.getElementById('next'), backB = document.getElementById('back');
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function group(title, hint, options, name){
+  const sel = state.picks[name] || [];
+  return `<h2>${esc(title)}</h2>${hint ? `<p>${esc(hint)}</p>` : ''}<div class="opts" data-group="${esc(name)}">` +
+    options.map(o => `<label><input type="checkbox" value="${esc(o)}" ${sel.includes(o)?'checked':''}><span>${esc(o)}</span></label>`).join('') + '</div>';
+}
+function render(){
+  backB.style.visibility = step === 0 ? 'hidden' : 'visible';
+  document.getElementById('step').textContent = `Etapa ${step+1} de 3`;
+  if (step === 0){
+    app.innerHTML = `<h1>O que você gosta?</h1><p>Escolha as áreas que mais te interessam. A Emma usa esses temas nos áudios, debates e role-plays. Você pode mudar quando quiser.</p>` +
+      `<div class="opts" id="areas">` + areaNames.map(a => `<label><input type="checkbox" value="${esc(a)}" ${state.areas.includes(a)?'checked':''}><span>${esc(a)}</span></label>`).join('') + '</div>';
+    nextB.textContent = 'Continuar'; nextB.disabled = state.areas.length === 0;
+    app.querySelectorAll('#areas input').forEach(i => i.onchange = () => {
+      state.areas = [...app.querySelectorAll('#areas input:checked')].map(x => x.value); nextB.disabled = state.areas.length === 0;
+    });
+  } else if (step === 1){
+    app.innerHTML = `<h1>Agora, mais detalhes</h1><p>Marque o que mais combina com você em cada área.</p>` +
+      state.areas.map(a => group(a, '', AREAS[a], a)).join('') +
+      Object.entries(FIXED).map(([t,o]) => group(t, 'Pode marcar mais de um.', o, t)).join('');
+    nextB.textContent = 'Salvar'; nextB.disabled = false;
+    app.querySelectorAll('.opts[data-group] input').forEach(i => i.onchange = () => {
+      const g = i.closest('.opts').dataset.group;
+      state.picks[g] = [...i.closest('.opts').querySelectorAll('input:checked')].map(x => x.value);
+    });
+  } else {
+    const all = [...state.areas, ...Object.keys(FIXED)];
+    app.innerHTML = `<h1>Tudo salvo</h1><p>Estes são seus interesses:</p>` +
+      all.map(g => `<h2>${esc(g)}</h2><p style="color:var(--fg)">${(state.picks[g]||[]).map(esc).join(' · ') || '—'}</p>`).join('');
+    backB.textContent = 'Editar'; nextB.textContent = 'Ir para a aula'; nextB.disabled = false;
+  }
+  window.scrollTo(0,0);
+}
+function save(){
+  // Mantém só as respostas das áreas escolhidas
+  const keep = [...state.areas, ...Object.keys(FIXED)];
+  const picks = {}; keep.forEach(k => picks[k] = state.picks[k] || []);
+  state.picks = picks;
+  try { localStorage.setItem(KEY, JSON.stringify({ areas: state.areas, picks, updated: new Date().toISOString() })); } catch {}
+}
+nextB.onclick = () => {
+  if (step === 2) { location.href = 'index.html'; return; }
+  if (step === 1) save();
+  step++; render();
+};
+backB.onclick = () => { if (step === 2) { backB.textContent = 'Voltar'; step = 1; } else step--; render(); };
+render();
+</script>
+</body>
+</html>

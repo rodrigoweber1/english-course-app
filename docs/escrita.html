@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escrita · English Course</title>
+<link rel="stylesheet" href="common.css">
+<style>.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:600px){.cols{grid-template-columns:1fr}}.sc{display:flex;justify-content:space-between;gap:8px}</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script src="common.js"></script>
+<script>
+EC.nav('escrita.html');
+const app = document.getElementById('app');
+// Tipos de texto do C1 Advanced em rotação; 1 de cada 4 tarefas é de mediação
+const TASKS = [
+ { kind:'essay', name:'Ensaio', task:'Write an essay on the following: "Remote work has made offices unnecessary." Discuss two of these points and say which you consider more important: productivity, social contact, work-life balance.', model:'Intro: state your position. Paragraph 1 and 2: one point each, with reasons and examples. Conclusion: say which is more important and why. Use linking words (Moreover, That said, Consequently).' },
+ { kind:'email (informal)', name:'E-mail informal', task:'A friend from Britain is thinking of moving to your city. Write an email telling them what life there is really like, and give some advice.', model:'Friendly opening, 2–3 short paragraphs (cost of living, people, advice), warm closing. Contractions and phrasal verbs are fine.' },
+ { kind:'report', name:'Relatório', task:'Your company is choosing a training course for the sales team. Write a report comparing two options and recommending one.', model:'Title, Introduction, Option 1, Option 2, Recommendation. Use headings and a neutral, impersonal tone.' },
+ { kind:'letter (formal)', name:'Carta formal', task:'Write a letter to a newspaper editor responding to an article that claimed public transport should be free. Say whether you agree.', model:'Dear Sir or Madam, opening reason for writing, 2 paragraphs of argument, closing formula (Yours faithfully).' },
+ { kind:'proposal', name:'Proposta', task:'Your town council wants to improve its leisure facilities. Write a proposal suggesting what to do with a limited budget.', model:'Introduction, Suggestions (with benefits), Costs, Conclusion. Persuasive but formal.' },
+ { kind:'review', name:'Resenha', task:'Write a review of a film, series or album you have enjoyed recently, for a magazine. Say who you would recommend it to.', model:'Catchy title, short summary without spoilers, evaluation of strong and weak points, recommendation.' },
+];
+const MED = { kind:'mediation (summary email)', name:'Mediação', task:'Read the short text in Spanish or Portuguese below (or choose any article you like) and write an email in English to a colleague who does not speak that language, summarising the key points and what action is needed.', model:'Greeting, 3–4 key points in your own words (do not translate word by word), action needed, polite closing.' };
+const hist = EC.get('writings', []);
+function current(){ const n = hist.length + 1; return n % 4 === 0 ? MED : TASKS[(n - 1 - Math.floor(n / 4)) % TASKS.length]; }
+const minWords = () => Math.min(220, 120 + hist.length * 15);
+function home(){
+  const tk = current();
+  app.innerHTML = `<h1>Escrita da semana</h1><p class="muted">Uma tarefa por semana (~30 min), no estilo do Cambridge C1 Advanced. Meta de extensão agora: ${minWords()}–260 palavras (vai subindo até 220–260).</p>
+  <div class="card"><span class="pill">${EC.esc(tk.name)}</span><p>${EC.esc(tk.task)}</p><p class="hint"><b>Estrutura recomendada:</b> ${EC.esc(tk.model)}</p></div>
+  <textarea id="t" aria-label="Seu texto" placeholder="Write here…"></textarea><p class="hint" id="wc">0 palavras</p>
+  <div class="row"><button class="primary" id="go">Enviar para correção</button></div><div id="out"></div>
+  <h2>Histórico</h2>${hist.slice().reverse().map(h => `<p>${h.date} · ${EC.esc(h.name)} · ${h.words} palavras · nota total ${h.total}/20</p>`).join('') || '<p class="hint">Nenhuma tarefa ainda.</p>'}`;
+  t.oninput = () => wc.textContent = words(t.value) + ' palavras';
+  go.onclick = () => submit(t, document.getElementById('out'), document.getElementById('go'));
+}
+const words = s => s.trim() ? s.trim().split(/\s+/).length : 0;
+async function submit(box, out, btn){
+  const text = box.value, task = current();
+  if (words(text) < 40) { out.innerHTML = '<p class="err">Escreva pelo menos 40 palavras.</p>'; return; }
+  out.innerHTML = '<p class="muted">Corrigindo…</p>'; btn.disabled = true;
+  try {
+    const r = await EC.evaluate('cambridge_writing', { kind: task.kind, task: task.task, text });
+    const S = r.scores, names = { content:'Conteúdo', communicative:'Realização comunicativa', organisation:'Organização', language:'Linguagem' };
+    const total = Object.values(S).reduce((a,x)=>a+x.score,0);
+    const id = 'escrita-' + EC.today() + '-' + Date.now();
+    EC.addErrors(r.errors, id);
+    hist.push({ date: EC.today(), name: task.name, words: words(text), total, scores: Object.fromEntries(Object.entries(S).map(([k,v])=>[k,v.score])) }); EC.set('writings', hist);
+    out.innerHTML = `<div class="card"><b>Nota: ${total}/20</b>${Object.entries(S).map(([k,v])=>`<p class="sc"><span>${names[k]}: <b>${v.score}/5</b></span><span class="muted">${EC.esc(v.comment)}</span></p>`).join('')}</div>
+      <h2>Seu texto e a versão corrigida</h2><div class="cols"><div class="card"><b>Seu texto</b><p>${EC.esc(text).replace(/\n/g,'<br>')}</p></div><div class="card"><b>Corrigido</b><p>${EC.diffHtml(text.replace(/\s+/g,' '), (r.corrected||'').replace(/\s+/g,' '))}</p></div></div>
+      <p class="hint"><del>apagado</del> / <ins>acrescentado</ins></p>
+      <h2>Reescrita obrigatória</h2><p class="muted">Reescreva as frases marcadas. A IA confere se agora estão corretas.</p>
+      <div id="rw">${(r.errors||[]).slice(0,8).map((e,i)=>`<div class="card"><p>${EC.esc(e.original)}</p><p class="hint">${EC.esc(e.type)}: ${EC.esc(e.explanation)}</p><input type="text" data-i="${i}" style="width:100%" aria-label="Reescreva a frase"></div>`).join('') || '<p class="hint">Sem erros marcados.</p>'}</div>
+      <button id="chk" class="primary">Conferir reescrita</button><div id="chkout"></div><p class="hint">Na próxima aula, a Emma vai pedir que você defenda suas ideias em voz alta.</p>`;
+    EC.set('lastWriting', { date: EC.today(), task: task.task, text: text.slice(0, 1500) });
+    if (window.chk) chk.onclick = async () => {
+      const items = [...rw.querySelectorAll('input')].map(inp => ({ original: r.errors[inp.dataset.i].original, correction: r.errors[inp.dataset.i].correction, rewrite: inp.value }));
+      chkout.innerHTML = '<p class="muted">Conferindo…</p>';
+      try { const c = await EC.evaluate('rewrite_check', { items }); chkout.innerHTML = (c.results||[]).map((x,i)=>`<p class="${x.ok?'okc':'err'}">${i+1}. ${x.ok?'Correto':'Ainda não'} — ${EC.esc(x.comment)}</p>`).join(''); } catch(e){ chkout.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; }
+    };
+  } catch(e){ out.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; }
+  btn.disabled = false;
+}
+home();
+</script>
+</body>
+</html>

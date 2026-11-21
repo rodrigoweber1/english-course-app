@@ -1,0 +1,6 @@
+.env
+node_modules/
+recordings/
+usage.json
+
+Especificación*.md

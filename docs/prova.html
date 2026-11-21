@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prova de nível · English Course</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script src="common.js"></script>
+<script>
+EC.nav('prova.html');
+const LV = ['B1','B2','C1','C2'];
+// Banco de perguntas (britânico). Cada nível tem 5.
+const BANK = [
+ // B1
+ ['If I ___ more time, I would learn Italian.', ['had','have','would have','having'], 0, 0],
+ ['She has lived here ___ 2019.', ['since','for','from','during'], 0, 0],
+ ["I'm not used ___ getting up so early.", ['to','for','with','at'], 0, 0],
+ ['The film was ___ boring that we left halfway through.', ['so','such','too','very'], 0, 0],
+ ['He asked me where ___.', ['I lived','did I live','do I live','I live'], 0, 0],
+ // B2
+ ['By the time we arrived, the film ___.', ['had already started','already started','has already started','was already start'], 0, 1],
+ ['I wish I ___ harder when I was at school.', ['had studied','studied','would study','have studied'], 0, 1],
+ ['She suggested ___ a taxi.', ['taking','to take','take','that to take'], 0, 1],
+ ["You ___ have told me earlier! Now it's too late.", ['should','might','can','must'], 0, 1],
+ ['The company decided to ___ the launch until next spring.', ['put off','put away','put out','put down'], 0, 1],
+ // C1
+ ['Not only ___ late, but he also forgot the documents.', ['did he arrive','he arrived','he did arrive','arrived he'], 0, 2],
+ ['It was the manager ___ made the final decision.', ['who','whom','which','whose'], 0, 2],
+ ['Had I known about the delay, I ___ earlier.', ['would have left','would leave','had left','left'], 0, 2],
+ ['___ the evidence, the committee reached no conclusion.', ['Despite having reviewed','In spite having','Although reviewing','Notwithstanding of'], 0, 2],
+ ['Her argument was so ___ that nobody could find a flaw in it.', ['watertight','waterproof','seaworthy','airborne'], 0, 2],
+ // C2
+ ['Hardly ___ the building when the alarm went off.', ['had she entered','she had entered','did she enter','she entered'], 0, 3],
+ ["He's a bit of a ___: he never commits to anything.", ['fence-sitter','bystander','hanger-on','stand-in'], 0, 3],
+ ["I'd rather you ___ anyone about this for the time being.", ["didn't tell","don't tell","won't tell","haven't told"], 0, 3],
+ ['The proposal, ___ merits are debatable, was approved.', ['whose','of which the','which','that its'], 0, 3],
+ ['She was ___ to the notion that remote work could be as productive.', ['averse','adverse','aversive','avert'], 0, 3],
+].map(([q,o,c,l]) => ({ q, o, c, l }));
+
+const READING = {
+  title: 'Texto provisório (será trocado por texto auténtico)',
+  text: `Cities across Europe are rethinking who their streets are for. In Paris, thousands of parking spaces have been replaced by cycle lanes, and the mayor insists the change was long overdue. Critics, mostly shopkeepers and commuters from the suburbs, argue that the policy punishes those who have no alternative to the car. Yet early figures suggest that footfall in many pedestrianised streets has risen rather than fallen, which complicates the case against the reforms. What remains unclear is whether the benefits will be shared evenly: cleaner air matters most in poorer districts, but those are also the neighbourhoods where public transport is least reliable. Urban planners say the real test will not be how the policy looks in a photograph, but how it works on a wet Tuesday morning.`,
+  qs: [
+    { q:'Who mainly opposes the policy?', o:['Shopkeepers and suburban commuters','Cyclists and planners','The mayor and residents','Tourists'], c:0 },
+    { q:'What do early figures suggest about pedestrianised streets?', o:['Fewer shoppers visit them','More people visit them','Shops have closed','Traffic has doubled'], c:1 },
+    { q:'What is the writer\'s concern about fairness?', o:['Cyclists pay too much','Poorer areas benefit most from cleaner air but have weaker public transport','Wealthy districts keep their parking','Shops pay higher taxes'], c:1 },
+    { q:'What does "a wet Tuesday morning" suggest?', o:['The policy only works in good weather','The policy must prove itself in ordinary, difficult conditions','Cycling is dangerous in rain','Tuesdays are the busiest day'], c:1 },
+  ],
+};
+const WPROMPT = 'Some people think that city centres should be closed to private cars. To what extent do you agree? Write 120–150 words.';
+
+let res = EC.get('placement_draft', {});
+const app = document.getElementById('app');
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+
+function intro(){
+  const last = EC.get('level', null);
+  app.innerHTML = `<h1>Prova de nível</h1>
+  <p>Mede seu nível real (de B1 a C2). É adaptativa: as perguntas sobem ou descem de dificuldade conforme suas respostas.</p>
+  ${last ? `<div class="card"><b>Último resultado:</b> ${EC.esc(last.overall)} · ${EC.esc(last.date)}</div>` : ''}
+  <div class="card"><b>Partes</b><ol>
+   <li>Gramática e vocabulário (≈10 min)</li><li>Leitura (≈5 min)</li><li>Escrita (≈5 min, correção com IA)</li>
+   <li>Escuta <span class="pill">pendente: chega com o áudio autêntico</span></li>
+   <li>Fala: entrevista com a Emma (≈10 min, IA)</li></ol>
+   <p class="hint">As partes com IA precisam da chave da API. Você pode fazer só algumas partes e continuar depois.</p></div>
+  <div class="row"><button class="primary" id="g1">1. Gramática e vocabulário</button><button id="g2">2. Leitura</button><button id="g3">3. Escrita</button><button id="g5">5. Fala</button><button id="gr">Ver resultado</button></div>`;
+  g1.onclick = grammar; g2.onclick = reading; g3.onclick = writing; g5.onclick = speaking; gr.onclick = result;
+}
+
+// 1. Gramática e vocabulário adaptativos
+function grammar(){
+  const used = new Set(); let L = 1, n = 0, hist = [];
+  const next = () => {
+    if (n >= 12) return end();
+    const pool = BANK.map((b,i)=>[b,i]).filter(([b,i]) => b.l === L && !used.has(i));
+    const fallback = BANK.map((b,i)=>[b,i]).filter(([b,i]) => !used.has(i)).sort((a,b)=>Math.abs(a[0].l-L)-Math.abs(b[0].l-L));
+    const [b,i] = pool.length ? pool[Math.floor(Math.random()*pool.length)] : fallback[0];
+    used.add(i); n++;
+    const opts = shuffle(b.o.map((t,k)=>({t,ok:k===b.c})));
+    app.innerHTML = `<p class="muted">Pergunta ${n} de 12</p><div class="bar"><i style="width:${n/12*100}%"></i></div><h2>${EC.esc(b.q)}</h2><div class="opts">${opts.map((o,k)=>`<button data-k="${k}">${EC.esc(o.t)}</button>`).join('')}</div>`;
+    app.querySelectorAll('.opts button').forEach(btn => btn.onclick = () => {
+      const ok = opts[btn.dataset.k].ok; hist.push({ level:b.l, ok });
+      L = Math.max(0, Math.min(3, L + (ok ? 1 : -1))); next();
+    });
+  };
+  const end = () => {
+    const last = hist.slice(-8), mean = last.reduce((a,h)=>a+h.level+(h.ok?0.25:-0.25),0)/last.length;
+    res.grammar = { score: Math.max(0, Math.min(3, mean)), correct: hist.filter(h=>h.ok).length, total: hist.length };
+    EC.set('placement_draft', res); app.innerHTML = `<h1>Parte 1 concluída</h1><p>Acertos: ${res.grammar.correct} de ${res.grammar.total}. Nível estimado: <b>${label(res.grammar.score)}</b>.</p><button class="primary" onclick="intro()">Continuar</button>`;
+  };
+  next();
+}
+const label = s => { const i = Math.max(0, Math.min(3, Math.floor(s + 0.0001))); const hi = s - Math.floor(s) >= .5; return LV[i] + (hi && i < 3 ? ' alto' : ''); };
+
+// 2. Leitura
+function reading(){
+  let html = `<h1>Leitura</h1><div class="card"><p class="hint">${EC.esc(READING.title)}</p><p>${EC.esc(READING.text)}</p></div>`;
+  READING.qs.forEach((q,qi) => { html += `<h2>${qi+1}. ${EC.esc(q.q)}</h2><div class="opts" data-q="${qi}">${q.o.map((o,k)=>`<button data-k="${k}">${EC.esc(o)}</button>`).join('')}</div>`; });
+  html += `<p><button class="primary" id="fin">Concluir</button></p>`; app.innerHTML = html;
+  const ans = {};
+  app.querySelectorAll('.opts button').forEach(b => b.onclick = () => { const g = b.parentElement; g.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); ans[g.dataset.q] = +b.dataset.k; });
+  fin.onclick = () => {
+    const ok = READING.qs.filter((q,i)=>ans[i]===q.c).length;
+    res.reading = { score: [0.5,1,1.5,2.5,3][ok], correct: ok, total: READING.qs.length };
+    EC.set('placement_draft', res); app.innerHTML = `<h1>Parte 2 concluída</h1><p>Acertos: ${ok} de ${READING.qs.length}. Nível estimado: <b>${label(res.reading.score)}</b>.</p><button class="primary" onclick="intro()">Continuar</button>`;
+  };
+}
+
+// 3. Escrita (IA)
+function writing(){
+  app.innerHTML = `<h1>Escrita</h1><div class="card">${EC.esc(WPROMPT)}</div><textarea id="t" aria-label="Seu texto"></textarea><p class="hint" id="wc">0 palavras</p><div class="row"><button class="primary" id="go">Enviar para correção</button><button onclick="intro()">Voltar</button></div><div id="out"></div>`;
+  t.oninput = () => wc.textContent = (t.value.trim() ? t.value.trim().split(/\s+/).length : 0) + ' palavras';
+  go.onclick = async () => {
+    out.innerHTML = '<p class="muted">Corrigindo…</p>'; go.disabled = true;
+    try {
+      const r = await EC.evaluate('placement_writing', { prompt: WPROMPT, text: t.value });
+      res.writing = { score: Math.max(0, LV.indexOf(r.cefr)), cefr: r.cefr, data: r }; EC.set('placement_draft', res);
+      EC.addErrors(r.errors, 'prova-' + EC.today());
+      out.innerHTML = `<div class="card"><b>Nível da escrita: ${EC.esc(r.cefr)}</b><p>Pontos fortes: ${(r.strengths||[]).map(EC.esc).join('; ')}</p><p>A melhorar: ${(r.weaknesses||[]).map(EC.esc).join('; ')}</p>${(r.errors||[]).map(e=>`<p>${EC.diffHtml(e.original,e.correction)}<br><span class="muted">${EC.esc(e.explanation)}</span></p>`).join('')}</div><button class="primary" onclick="intro()">Continuar</button>`;
+    } catch(e){ out.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; }
+    go.disabled = false;
+  };
+}
+
+// 5. Fala: entrevista com a Emma
+function speaking(){
+  const hist = [{ role:'user', content:'Hello, I am ready for the interview.' }]; let turns = 0;
+  app.innerHTML = `<h1>Entrevista oral</h1><p class="hint">Clique em "Falar", responda e espere a pausa. A Emma não corrige durante a entrevista. Você também pode escrever.</p><div id="log"></div><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Falar</button><input type="text" id="tx" placeholder="Ou escreva…"><button id="snd">Enviar</button><button id="fin">Terminar e avaliar</button></div><div id="out"></div>`;
+  const add = (w,t) => { log.insertAdjacentHTML('beforeend', `<div class="card"><b>${w}</b><br>${EC.esc(t)}</div>`); };
+  const turn = async () => {
+    st.textContent = 'Emma está pensando…';
+    try { const d = await EC.api('/api/chat', { messages: hist, phase:'placement' }); hist.push({ role:'assistant', content:d.text }); add('Emma', d.text); st.textContent=''; await EC.speak(d.text); }
+    catch(e){ st.textContent = e.message; hist.pop(); }
+  };
+  const say = t => { t=t.trim(); if(!t) return; tx.value=''; hist.push({ role:'user', content:t }); add('Você', t); turns++; turn(); };
+  mic.onclick = async () => { mic.disabled = true; st.textContent = 'Ouvindo…'; try { const r = await EC.listen(); say(r.text); } catch(e){ st.textContent = e.message; } mic.disabled = false; if (!st.textContent.startsWith('Emma')) st.textContent=''; };
+  snd.onclick = () => say(tx.value);
+  fin.onclick = async () => {
+    out.innerHTML = '<p class="muted">Avaliando…</p>';
+    try {
+      const r = await EC.evaluate('placement_speaking', { transcript: hist });
+      res.speaking = { score: Math.max(0, LV.indexOf(r.cefr)), cefr: r.cefr, data: r }; EC.set('placement_draft', res); EC.addErrors(r.errors, 'prova-' + EC.today());
+      out.innerHTML = `<div class="card"><b>Nível oral: ${EC.esc(r.cefr)}</b><p>${(r.strengths||[]).map(EC.esc).join('; ')}</p><p>${(r.weaknesses||[]).map(EC.esc).join('; ')}</p></div><button class="primary" onclick="intro()">Continuar</button>`;
+    } catch(e){ out.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; }
+  };
+  turn();
+}
+
+// Resultado final
+function result(){
+  const parts = [['Gramática e vocabulário', res.grammar], ['Leitura', res.reading], ['Escrita', res.writing], ['Expressão oral', res.speaking]];
+  const done = parts.filter(p => p[1]);
+  if (!done.length) { app.innerHTML = '<p>Faça pelo menos uma parte primeiro.</p><button onclick="intro()">Voltar</button>'; return; }
+  const avg = done.reduce((a,p)=>a+p[1].score,0)/done.length;
+  const overall = label(avg);
+  app.innerHTML = `<h1>Resultado</h1><div class="card"><h2 style="margin-top:0">Nível global estimado: ${EC.esc(overall)}</h2>
+   <table>${parts.map(([n,p]) => `<tr><td>${n}</td><td>${p ? EC.esc(p.cefr || label(p.score)) : '<span class="muted">não feita</span>'}</td></tr>`).join('')}<tr><td>Compreensão auditiva</td><td class="muted">pendente</td></tr></table>
+   ${done.length < 4 ? '<p class="hint">Resultado parcial: faça as outras partes para uma estimativa mais fiável.</p>' : ''}</div>
+   <div class="card"><b>Teste externo</b><p class="hint">Faça também um teste gratuito (EF SET ou Cambridge English) e anote o nível para comparar.</p><label>Nível do teste externo</label><select id="ext"><option value="">—</option>${['A2','B1','B2','C1','C2'].map(l=>`<option>${l}</option>`).join('')}</select></div>
+   <div class="row"><button class="primary" id="save">Guardar e criar meu plano</button><button onclick="intro()">Voltar</button></div>`;
+  save.onclick = () => {
+    EC.set('level', { overall, avg, date: EC.today(), parts: Object.fromEntries(parts.map(([n,p]) => [n, p ? (p.cefr || label(p.score)) : null])), external: ext.value || null });
+    const hist = EC.get('level_history', []); hist.push({ date: EC.today(), overall, avg }); EC.set('level_history', hist);
+    EC.set('placement_draft', {}); location.href = 'plano.html';
+  };
+}
+intro();
+</script>
+</body>
+</html>

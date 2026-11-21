@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biblioteca · English Course</title>
+<link rel="stylesheet" href="common.css">
+<style>.tabs{display:flex;gap:6px;margin:8px 0}.tabs button.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}.big{font-size:19px}</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Biblioteca</h1>
+<div class="tabs" role="tablist"><button data-t="cards">Cartões de gramática</button><button data-t="vocab">Vocabulário</button><button data-t="errors">Erros</button></div>
+<div id="view"></div>
+</div>
+<script src="common.js"></script>
+<script>
+EC.nav('biblioteca.html');
+const view = document.getElementById('view');
+let tab = 'cards';
+const norm = s => (s||'').toLowerCase().replace(/[^a-z' ]/g,' ').split(/\s+/).filter(Boolean);
+const similar = (a, b) => { const x = norm(a), y = new Set(norm(b)); return x.length ? x.filter(w => y.has(w)).length / Math.max(x.length, y.size) : 0; };
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; draw(); });
+function draw(){ document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); ({cards, vocab, errors})[tab](); }
+const due = l => l.filter(x => (x.due || '') <= EC.today());
+
+function review(items, key, show, check, save){
+  // Revisão oral com repetição espaçada
+  let i = 0;
+  const step = () => {
+    if (i >= items.length) { view.innerHTML = '<div class="card"><b>Revisão concluída.</b></div>'; setTimeout(draw, 1200); return; }
+    const it = items[i];
+    view.innerHTML = `<p class="muted">${i+1} de ${items.length}</p><div class="card">${show(it)}</div><div class="row"><button class="primary" id="say">Falar</button><button id="skip">Ver resposta</button></div><div id="fb"></div>`;
+    const reveal = (txt) => {
+      fb.innerHTML = `<div class="card">${txt}</div><p class="muted">Como foi?</p><div class="row"><button data-g="0">Errei</button><button data-g="1">Difícil</button><button data-g="2">Bom</button><button data-g="3">Fácil</button></div>`;
+      fb.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { EC.srsNext(it, +b.dataset.g); save(); i++; step(); });
+    };
+    say.onclick = async () => { say.disabled = true; say.textContent = 'Ouvindo…'; try { const r = await EC.listen(); reveal(check(it, r.text)); } catch(e){ fb.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; } say.disabled = false; say.textContent = 'Falar'; };
+    skip.onclick = () => reveal(check(it, ''));
+  };
+  step();
+}
+
+function cards(){
+  const all = EC.get('cards', []), d = due(all);
+  view.innerHTML = `<p class="muted">${all.length} cartões · ${d.length} para hoje. Os cartões surgem dos erros dos relatórios das aulas.</p>
+  ${d.length ? '<button class="primary" id="rev">Revisar em voz alta</button>' : ''}
+  ${all.slice().reverse().map((c,i) => `<div class="card"><b>${EC.esc(c.title)}</b><p>${EC.diffHtml(c.wrong, c.right)}</p><p>${EC.esc(c.rule)}</p>${(c.examples||[]).map(e=>`<p class="muted">• ${EC.esc(e)}</p>`).join('')}<button data-sp="${EC.esc(c.right)}">Ouvir (GB)</button></div>`).join('') || '<p class="hint">Ainda não há cartões. Faça uma aula e gere o relatório.</p>'}`;
+  view.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => EC.speak(b.dataset.sp));
+  if (window.rev) rev.onclick = () => review(d, 'cards', c => `<p class="hint">${EC.esc(c.title)}</p><p class="big">${EC.esc(c.wrong)}</p><p>Diga a frase corrigida em voz alta.</p>`,
+    (c, said) => `${said ? `Você disse: ${EC.esc(said)} (${Math.round(similar(c.right, said)*100)}% de coincidência)<br>` : ''}Correta: <ins>${EC.esc(c.right)}</ins><br>${EC.esc(c.rule)}`, () => EC.set('cards', all));
+}
+function vocab(){
+  const all = EC.get('vocab', []), d = due(all), mastered = all.filter(v => (v.uses||0) >= 3).length;
+  view.innerHTML = `<p class="muted">${all.length} expressões · ${mastered} dominadas · ${d.length} para hoje.</p>
+  <div class="row"><input type="text" id="nt" placeholder="Nova expressão"><input type="text" id="nd" placeholder="Definição ou exemplo"><button id="add">Adicionar</button></div>
+  ${d.length ? '<p><button class="primary" id="rev">Revisar em voz alta</button></p>' : ''}
+  <table>${all.slice().reverse().map(v => `<tr><td><b>${EC.esc(v.term)}</b><br><span class="muted">${EC.esc(v.definition||'')}</span></td><td>${(v.uses||0) >= 3 ? '<span class="pill okc">dominada</span>' : `<span class="pill">${v.uses||0}/3</span>`}</td><td><button data-sp="${EC.esc(v.example||v.term)}" aria-label="Ouvir">▶</button></td></tr>`).join('')}</table>`;
+  view.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => EC.speak(b.dataset.sp));
+  add.onclick = () => { if (nt.value.trim()) { EC.addVocab([{ term: nt.value.trim(), definition: nd.value.trim(), example: '' }]); vocab(); } };
+  if (window.rev) rev.onclick = () => review(d, 'vocab', v => `<p class="hint">Diga a expressão e uma frase sua com ela.</p><p class="big">${EC.esc(v.definition || v.example || '')}</p>`,
+    (v, said) => `${said ? `Você disse: ${EC.esc(said)}<br>${norm(said).join(' ').includes(norm(v.term).join(' ')) ? '<span class="okc">Usou a expressão.</span>' : '<span class="err">Não ouvi a expressão.</span>'}<br>` : ''}Resposta: <b>${EC.esc(v.term)}</b>${v.example ? '<br><i>' + EC.esc(v.example) + '</i>' : ''}`, () => EC.set('vocab', all));
+}
+function errors(){
+  const all = EC.get('errors', []), pe = EC.persistentErrors();
+  view.innerHTML = `<h2>Erros persistentes (3+ sessões)</h2>${pe.map(e=>`<div class="card">${EC.diffHtml(e.original, e.correction)}<br><span class="muted">${EC.esc(e.type)} · ${e.count} sessões</span></div>`).join('') || '<p class="hint">Nenhum por enquanto.</p>'}
+  <h2>Todos os erros (${all.length})</h2>${all.slice().reverse().slice(0, 60).map(e=>`<p>${EC.diffHtml(e.original, e.correction)}<br><span class="muted">${EC.esc(e.date)} · ${EC.esc(e.type||'')} · ${EC.esc(e.explanation||'')}</span></p>`).join('') || '<p class="hint">Sem erros registrados.</p>'}`;
+}
+draw();
+</script>
+</body>
+</html>

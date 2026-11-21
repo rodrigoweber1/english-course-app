@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escuta · English Course</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="wrap">
+<h1>Escuta livre</h1>
+<p class="muted">Programas britânicos reais (BBC, The Guardian), sem conteúdo didático. Ouça pelo menos 20 minutos nos dias de escuta. O tempo que passar com o player aberto é contado.</p>
+<div class="card" id="rec"></div>
+<label>Programa</label>
+<select id="feed" aria-label="Programa"></select>
+<p class="err" id="err"></p>
+<div id="eps"></div>
+
+<h2>Registrar escuta fora do app</h2>
+<p class="hint">Ouviu um podcast no carro ou no trajeto? Registre aqui: esse tempo conta no plano.</p>
+<div class="row"><input type="text" id="prog" placeholder="Programa" aria-label="Programa ouvido"><input type="number" id="min" min="1" max="240" placeholder="Minutos" style="width:110px" aria-label="Minutos"><button class="primary" id="add">Registrar</button></div>
+<div id="hist"></div>
+</div>
+<script src="common.js"></script>
+<script>
+EC.nav('escuta.html');
+// Sugestão simples por interesse
+const SUG = { 'Música':'Desert Island Discs (BBC Radio 4)', 'Atualidade':'Global News Podcast (BBC)', 'Economia e negócios':'Global News Podcast (BBC)', 'Cinema e séries':'The Guardian (podcast)', 'Outros temas de lazer':'Desert Island Discs (BBC Radio 4)', 'Esporte':'Global News Podcast (BBC)' };
+const ints = EC.get('interests', null) || (()=>{ try { return JSON.parse(localStorage.getItem('ec_interests')); } catch { return null; } })();
+const outside = () => EC.get('outside', []);
+function drawHist(){
+  const o = outside(), wk = o.filter(x => (new Date() - new Date(x.date))/864e5 < 7).reduce((a,x)=>a+x.min,0);
+  hist.innerHTML = `<p><b>Esta semana:</b> ${wk} min registrados.</p><table>${o.slice().reverse().slice(0,10).map(x=>`<tr><td>${x.date}</td><td>${EC.esc(x.prog)}</td><td>${x.min} min</td></tr>`).join('')}</table>`;
+}
+add.onclick = () => { const m = +min.value; if (m > 0 && prog.value.trim()) { const o = outside(); o.push({ date: EC.today(), prog: prog.value.trim(), min: m }); EC.set('outside', o); prog.value = min.value = ''; drawHist(); } };
+
+async function load(){
+  err.textContent = ''; eps.innerHTML = '<p class="muted">Carregando…</p>';
+  try {
+    const list = await EC.api('/api/feed?name=' + encodeURIComponent(feed.value));
+    eps.innerHTML = list.map((e,i) => `<div class="card"><b>${EC.esc(e.title)}</b><br><span class="muted">${EC.esc(e.date.slice(0,16))}${e.duration ? ' · ' + (/^\d+$/.test(e.duration) ? Math.round(e.duration/60) + ' min' : EC.esc(e.duration)) : ''}</span><p class="hint">${EC.esc(e.description)}</p><audio controls preload="none" src="${EC.esc(e.audio)}" data-p="${EC.esc(feed.value)}" style="width:100%"></audio></div>`).join('') || '<p>Sem episódios.</p>';
+    // Conta o tempo ouvido (a cada 30 s de reprodução)
+    eps.querySelectorAll('audio').forEach(a => { let last = 0; a.ontimeupdate = () => { if (!a.paused && a.currentTime - last >= 30) { last = a.currentTime; const o = outside(), t = o[o.length-1]; if (t && t.auto === a.src && t.date === EC.today()) t.min += .5; else o.push({ date: EC.today(), prog: a.dataset.p + ' (app)', min: .5, auto: a.src }); EC.set('outside', o); drawHist(); } }; a.onpause = () => { last = a.currentTime; }; });
+  } catch(e){ eps.innerHTML = ''; err.textContent = e.message; }
+}
+(async () => {
+  const names = await EC.api('/api/feeds');
+  feed.innerHTML = names.map(n => `<option>${EC.esc(n)}</option>`).join('');
+  const first = ints?.areas?.map(a => SUG[a]).find(Boolean);
+  if (first && names.includes(first)) { feed.value = first; rec.innerHTML = `Sugestão para você, pelos seus interesses: <b>${EC.esc(first)}</b>`; } else rec.innerHTML = 'Escolha um programa. Responda o questionário de interesses para receber sugestões.';
+  feed.onchange = load; load(); drawHist();
+})();
+</script>
+</body>
+</html>
