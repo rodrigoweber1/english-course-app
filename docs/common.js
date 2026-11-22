@@ -35,7 +35,7 @@ const EC = {
     };
     const items = [['prova.html','Placement test'],['index.html','Lesson'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['interesses.html','Interests'],['ajustes.html','Settings']];
     const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Main menu');
-    n.innerHTML = '<a class="brand" href="index.html" aria-label="English Course, home"><span class="logo" aria-hidden="true">E</span><b>English Course</b></a>' +
+    n.innerHTML = '<a class="brand" href="index.html" aria-label="Ask Emma, home"><span class="logo" aria-hidden="true">E</span><b>Ask Emma</b></a>' +
       items.map(([h,t]) => `<a href="${h}" ${h===active?'class="on" aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[h.replace('.html','')]}</svg>${t}</a>`).join('');
     const z = document.createElement('span'); z.className = 'ecz';
     z.innerHTML = '<button type="button" aria-label="Smaller text" title="Smaller text">A−</button><button type="button" aria-label="Larger text" title="Larger text">A+</button>';
@@ -193,7 +193,7 @@ EC.weekNow = function(plan, settings){
 };
 EC.icsExport = function(settings){
   const s = settings || EC.settings(), pad = n => String(n).padStart(2,'0');
-  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//English Course//EN','CALSCALE:GREGORIAN'];
+  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Ask Emma//EN','CALSCALE:GREGORIAN'];
   const stamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
   const days = ['SU','MO','TU','WE','TH','FR','SA'];
   const add = (title, day, time, mins) => {
@@ -204,9 +204,9 @@ EC.icsExport = function(settings){
     for (const l of s.leads) out.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${title}`, `TRIGGER:-PT${l}M`, 'END:VALARM');
     out.push('END:VEVENT');
   };
-  Object.entries(s.classes).forEach(([d,t]) => add('English Course: lesson (25 min)', +d, t, 25));
-  (s.listen.days || []).forEach(d => add('English Course: free listening (20 min)', d, s.listen.time, 20));
-  add('English Course: writing task (30 min)', s.write.day, s.write.time, 30);
+  Object.entries(s.classes).forEach(([d,t]) => add('Ask Emma: lesson (25 min)', +d, t, 25));
+  (s.listen.days || []).forEach(d => add('Ask Emma: free listening (20 min)', d, s.listen.time, 20));
+  add('Ask Emma: writing task (30 min)', s.write.day, s.write.time, 30);
   out.push('END:VCALENDAR');
   return out.join('\r\n');
 };
@@ -318,11 +318,11 @@ EC.checkReminders = function(){
   const mins = (hhmm) => { const [h,m] = hhmm.split(':').map(Number); return h*60+m; };
   const nowM = now.getHours()*60 + now.getMinutes();
   const t = s.classes[now.getDay()];
-  if (t) for (const l of s.leads) if (nowM === mins(t) - l) fire(today+'a'+l, 'English Course', `In ${l} min: ${type}, 25 minutes.`);
-  if (t && s.second.on && nowM === mins(t) + s.second.hours*60 && !EC.get('sessions', []).some(x => x.date === today)) fire(today+'b', 'English Course', "You haven't started today's lesson yet. Shall we do it now?");
-  if ((s.listen.days || []).includes(now.getDay()) && nowM === mins(s.listen.time)) fire(today+'l', 'English Course', 'Today is a free-listening day (20 min).');
-  if (s.write.day === now.getDay() && nowM === mins(s.write.time)) fire(today+'w', 'English Course', "Time for this week's writing task.");
-  if (now.getDay() === 0 && nowM === 20*60) fire(today+'s', 'English Course', 'Weekly summary: check your plan.');
+  if (t) for (const l of s.leads) if (nowM === mins(t) - l) fire(today+'a'+l, 'Ask Emma', `In ${l} min: ${type}, 25 minutes.`);
+  if (t && s.second.on && nowM === mins(t) + s.second.hours*60 && !EC.get('sessions', []).some(x => x.date === today)) fire(today+'b', 'Ask Emma', "You haven't started today's lesson yet. Shall we do it now?");
+  if ((s.listen.days || []).includes(now.getDay()) && nowM === mins(s.listen.time)) fire(today+'l', 'Ask Emma', 'Today is a free-listening day (20 min).');
+  if (s.write.day === now.getDay() && nowM === mins(s.write.time)) fire(today+'w', 'Ask Emma', "Time for this week's writing task.");
+  if (now.getDay() === 0 && nowM === 20*60) fire(today+'s', 'Ask Emma', 'Weekly summary: check your plan.');
   EC.set('fired', fired);
 };
 setInterval(EC.checkReminders, 30000);
@@ -388,7 +388,7 @@ if (EC.authOn && !/login\.html$/.test(location.pathname) && !EC.session()) locat
 EC.backupKeys = () => Object.keys(localStorage).filter(k => k.startsWith('ec_') && !['ec_auth', 'ec_pw', 'ec_lastBackup'].includes(k));
 EC.backupData = () => { const keys = {}; EC.backupKeys().forEach(k => { keys[k] = localStorage.getItem(k); }); return { app: 'english-course', version: 1, date: new Date().toISOString(), keys }; };
 EC.backupRestore = obj => {
-  if (!obj || obj.app !== 'english-course' || typeof obj.keys !== 'object') throw new Error('This file is not an English Course backup.');
+  if (!obj || obj.app !== 'english-course' || typeof obj.keys !== 'object') throw new Error('This file is not an Ask Emma backup.');
   EC.backupKeys().forEach(k => localStorage.removeItem(k));
   Object.entries(obj.keys).forEach(([k, v]) => { if (/^ec_[\w-]+$/.test(k) && !['ec_auth', 'ec_pw'].includes(k) && typeof v === 'string') localStorage.setItem(k, v); });
   return Object.keys(obj.keys).length;

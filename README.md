@@ -1,4 +1,4 @@
-# English Course
+# Ask Emma
 
 App web pessoal para praticar inglês oral (nível B2 alto → C1). Veja a especificação em `Especificación app para practicar inglés oral.md`.
 

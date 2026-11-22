@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Settings · English Course</title>
+<title>Settings · Ask Emma</title>
 <link rel="stylesheet" href="common.css">
 <style>.dayrow{display:flex;gap:8px;align-items:center;margin:6px 0}.dayrow span{width:80px}</style>
 <link rel="stylesheet" href="theme.css">
@@ -94,7 +94,7 @@ function read(){
 save.onclick = () => { read(); if (!s.planStart) s.planStart = EC.today(); EC.set('settings', s); msg.textContent = 'Settings saved.'; note(); };
 const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 if (iOS) { iph.style.display = ''; iph.onclick = () => { read(); location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(EC.icsExport(s)); }; document.getElementById('iphnote').textContent = 'Tap "Add to iPhone Calendar" and then "Add All". Reminders are included.'; }
-ics.onclick = () => { read(); const b = new Blob([EC.icsExport(s)], { type:'text/calendar' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'english-course.ics'; a.click(); };
+ics.onclick = () => { read(); const b = new Blob([EC.icsExport(s)], { type:'text/calendar' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'ask-emma.ics'; a.click(); };
 function drawUsage(u){
   const sp = EC.totalSpent(u), credit = +s.credit || 5, pct = Math.min(100, sp.usd / credit * 100), left = Math.max(0, credit - sp.usd);
   const col = pct >= 90 ? '#c0392b' : pct >= 70 ? '#d98c00' : 'var(--primary)';
@@ -125,7 +125,7 @@ credit.onchange = () => { s.credit = Math.max(1, +credit.value || 5); EC.set('se
   bkNote.textContent = last ? 'Last backup: ' + new Date(last).toLocaleString('en-GB') : 'You have not made a backup yet.';
   bkOut.onclick = () => {
     const b = new Blob([JSON.stringify(EC.backupData(), null, 1)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'english-course-backup-' + EC.today() + '.json'; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'ask-emma-backup-' + EC.today() + '.json'; a.click();
     try { localStorage.setItem('ec_lastBackup', new Date().toISOString()); } catch {}
     bkNote.className = 'okc'; bkNote.textContent = 'Backup saved to your Downloads folder. Move it somewhere safe.';
   };
@@ -133,7 +133,7 @@ credit.onchange = () => { s.credit = Math.max(1, +credit.value || 5); EC.set('se
   bkFile.onchange = async () => {
     const f = bkFile.files[0]; if (!f) return; bkFile.value = '';
     let obj; try { obj = JSON.parse(await f.text()); } catch { bkNote.className = 'err'; bkNote.textContent = 'This file could not be read.'; return; }
-    if (!obj || obj.app !== 'english-course') { bkNote.className = 'err'; bkNote.textContent = 'This file is not an English Course backup.'; return; }
+    if (!obj || obj.app !== 'english-course') { bkNote.className = 'err'; bkNote.textContent = 'This file is not an Ask Emma backup.'; return; }
     const when = obj.date ? new Date(obj.date).toLocaleString('en-GB') : 'unknown date';
     if (!confirm('Replace ALL the progress in this browser with the backup from ' + when + '? What is here now will be lost.')) return;
     try { const n = EC.backupRestore(obj); bkNote.className = 'okc'; bkNote.textContent = 'Backup restored (' + n + ' items). Reloading…'; setTimeout(() => location.reload(), 900); }
