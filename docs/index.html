@@ -165,6 +165,27 @@ function addMsg(who, text, cls=''){
   const p = document.createElement('div'); p.textContent = text;
   d.append(w, p); chat.append(d); chat.scrollTop = chat.scrollHeight; return d;
 }
+// Trecho de escuta (fase Input): a Emma lê em voz alta e o texto fica escondido
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+function splitClip(t){
+  const m = t.match(/\[CLIP\]([\s\S]*?)\[\/CLIP\]/i);
+  return m ? { clip: m[1].trim(), rest: (t.slice(0, m.index) + t.slice(m.index + m[0].length)).trim() } : { clip: null, rest: t };
+}
+function addTutor(text){
+  const { clip, rest } = splitClip(text);
+  const d = addMsg('tutor', rest);
+  if (clip) {
+    const showNow = !$('voiceOut').checked;   // sem voz, o exercício vira leitura
+    const box = document.createElement('div'); box.className = 'clipbox';
+    box.innerHTML = `<div class="cliphead"><span class="cliptitle">Listening clip</span><button type="button" class="clipplay">${ICON_PLAY} Play again</button><button type="button" class="cliptr" aria-expanded="${showNow}">${showNow ? 'Hide' : 'Show'} transcript</button></div><p class="cliptext" ${showNow ? '' : 'hidden'}></p>`;
+    box.querySelector('.cliptext').textContent = clip;
+    box.querySelector('.clipplay').onclick = () => { if (!paused) EC.speak(clip); };
+    const tb = box.querySelector('.cliptr'), tx = box.querySelector('.cliptext');
+    tb.onclick = () => { tx.hidden = !tx.hidden; tb.textContent = (tx.hidden ? 'Show' : 'Hide') + ' transcript'; tb.setAttribute('aria-expanded', !tx.hidden); };
+    d.insertBefore(box, d.lastChild);
+  }
+  return { clip, rest };
+}
 const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0');
 
 // Barra de fases
@@ -212,9 +233,9 @@ async function ask(phaseKey){
   try {
     const data = await EC.api('/api/chat', { messages: history, interests: interestsText(), memory: EC.memoryText(), sessionType: EC.sessionType(), phase: phaseKey || PHASES[phase].key, tutorShare: tutorShare() });
     history.push({ role:'assistant', content:data.text });
-    addMsg('tutor', data.text); setStatus(''); saveLesson();
+    const parts = addTutor(data.text); setStatus(''); saveLesson();
     busy = false;
-    if (!paused) await speak(data.text);
+    if (!paused) { if (parts.clip) await speak(parts.clip); if (parts.rest) await speak(parts.rest); }
   } catch(e){ setStatus(e.message, true); history.pop(); }
   busy = false;
 }
@@ -424,7 +445,7 @@ function restoreLesson(L){
     const j = phaseStart.indexOf(k, 1);
     if (j > 0 && phaseScores[j-1]) { const d = document.createElement('div'); d.className = 'msg score'; d.innerHTML = scoreHtml(phaseScores[j-1]); chat.append(d); }
     if (m.content.startsWith('(') || m.content.startsWith('Hello! Please')) return;
-    addMsg(m.role === 'assistant' ? 'tutor' : 'user', m.content);
+    if (m.role === 'assistant') addTutor(m.content); else addMsg('user', m.content);
   });
   $('start').style.display = 'none'; lessonActive = true;
   paused = true; pauseStart = Date.now(); pausedMs = 0; startedAt = Date.now() - L.elapsed * 1000;
@@ -458,12 +479,13 @@ function interestsText(){
 }
 // Primeiros passos do curso: 1 Interesses, 2 Prova de nível, 3 Aula
 (function(){
-  const hasInt = !!loadInterests(), hasLvl = !!EC.get('level', null), resuming = $('resumeBox').style.display === 'block';
+  const hasInt = !!loadInterests(), hasLvl = !!EC.get('level', null), cdue = EC.checkpointDue(), resuming = $('resumeBox').style.display === 'block';
   const row = (n, done, title, sub, href) => `<li class="${done ? 'done' : ''}"><span class="num">${done ? '✓' : n}</span><span class="txt"><b>${title}</b><br><span class="hint">${sub}</span></span>${done ? '<a class="chg" href="'+href+'">Edit</a>' : '<a class="btn primary go" href="'+href+'">Start</a>'}</li>`;
   $('setup').innerHTML = '<b class="sh">Getting started</b><ol>' +
     row(1, hasInt, 'Your interests', 'Tell Emma what you enjoy talking about (3 min).', 'interesses.html') +
     row(2, hasLvl, 'Placement test', 'Find your starting level (about 20 min).', 'prova.html') +
-    '<li class="' + (hasInt ? '' : 'locked') + '"><span class="num">3</span><span class="txt"><b>Your lesson with Emma</b><br><span class="hint">' + (hasInt ? 'Ready when you are.' : 'Unlocks after step 1.') + '</span></span></li></ol>';
+    (cdue ? `<li><span class="num">★</span><span class="txt"><b>${cdue.final ? 'Final assessment' : 'Checkpoint test · week ' + cdue.week}</b><br><span class="hint">Time to measure your progress (optional now).</span></span><a class="btn primary go" href="prova.html?checkpoint=${cdue.week}">Start</a></li>` : '') +
+        '<li class="' + (hasInt ? '' : 'locked') + '"><span class="num">3</span><span class="txt"><b>Your lesson with Emma</b><br><span class="hint">' + (hasInt ? 'Ready when you are.' : 'Unlocks after step 1.') + '</span></span></li></ol>';
   $('go').disabled = !hasInt && !resuming;
   if (!hasInt) $('go').title = 'Please complete the interests questionnaire first.';
   $('intBtn').style.display = 'none';

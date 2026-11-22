@@ -28,7 +28,7 @@ This is a 25-minute lesson in five phases. Follow the current phase instruction 
 
 const PHASES = {
   warmup: 'PHASE 1 - Warm-up (2-3 min, about 2.5): light, friendly small talk. If you remember something from earlier, pick it up.',
-  input: 'PHASE 2 - Authentic input (5 min): no audio clip is available yet. Briefly (max 3 short sentences) describe a real-sounding snippet from an interview or documentary on a topic the learner likes, then ask open comprehension questions about it, one at a time.',
+  input: 'PHASE 2 - Listening input (5 min). The learner LISTENS to your clip: it is read aloud and the text is hidden from them. When this phase starts (or when the learner asks for a new clip), write ONE clip of 90-130 words of natural spoken British English on a topic the learner likes, at roughly B2+/C1 level, as a short monologue or a two-person exchange (write it as plain spoken text, no speaker labels, no stage directions). Put the clip between the tags [CLIP] and [/CLIP], and after the closing tag add exactly ONE short comprehension question (gist first, then detail, then opinion in later turns). Never mention the tags. In later turns, do NOT write a new clip: react briefly to the learner answer and ask the next question about the same clip, one at a time. If the learner could not understand, offer to replay or give a simpler paraphrase.',
   guided: 'PHASE 3 - Guided conversation (12 min): run a debate, opinion exchange, narration or role-play based on the earlier topic. Ask open and follow-up questions; play devil\'s advocate sometimes.',
   grammar: 'PHASE 4 - Grammar focus (3-4 min): pick ONE structure from the learner\'s mistakes so far (or a C1 structure like inversion or cleft sentences). Explain it in one sentence, then ask the learner to say 3 practice sentences aloud, one at a time. For this phase only you may use up to 40 words.',
   closing: 'PHASE 5 - Closing (1-2 min): ask the learner to sum up aloud what they learned today. Then thank them warmly in one sentence.',
@@ -169,7 +169,7 @@ async function handleApi(req, res) {
       if (sessionType) system += '\n\nToday\'s session type: ' + String(sessionType).slice(0, 80) + '. Shape phases 2-3 accordingly (debate / intensive listening and comprehension / role-play and review of recurring errors; in role-play, once a week include a mediation task: the learner explains a short Spanish or Portuguese text to you in English as if you did not speak those languages).';
       if (memory) system += '\n\nMemory about this learner (use it naturally; never read it out as a list):\n' + String(memory).slice(0, 2500) + '\nFor persistent errors, do NOT correct directly: use prompts that make the learner self-correct (repeat with rising intonation, ask for clarification, or give a 1-2 word hint). If the learner does not self-correct after one prompt, give the correct form and move on. Build situations that make the learner use the recent expressions and the C1 structures to practise.';
       if (tutorShare > 0.25) system += '\nWARNING: you are talking too much. Make your next turn even shorter (one sentence).';
-      const text = await claude({ model: MODEL, system, messages, max_tokens: 200 });
+      const text = await claude({ model: MODEL, system, messages, max_tokens: phase === 'input' ? 600 : 200 });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ text }));
     } catch (e) {

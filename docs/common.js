@@ -210,6 +210,21 @@ EC.icsExport = function(settings){
   return out.join('\r\n');
 };
 
+// ---------- Provas de checkpoint (semanas 8, 16, 24, 32, 40 do ciclo e avaliação final) ----------
+EC.checkpointList = function(){
+  const level = EC.get('level', null), s = EC.settings(), p = EC.plan(level, s);
+  const offset = p.phases[0].id === 0 ? p.phases[0].weeks : 0;
+  const weeks = [8,16,24,32,40].map(w => w + offset).filter(w => w < p.total).concat([p.total]);
+  const done = EC.get('checkpoints', {}), wk = EC.weekNow(p, s);
+  return weeks.map(w => ({ week: w, final: w === p.total, done: done[w] || null, due: wk >= w && !done[w] }));
+};
+// Prova pendente mais recente (só depois de a prova de nível existir). As anteriores não feitas ficam como puladas.
+EC.checkpointDue = function(){
+  if (!EC.get('level', null)) return null;
+  const due = EC.checkpointList().filter(c => c.due);
+  return due.length ? due[due.length - 1] : null;
+};
+
 // ---------- Sugestão de ajuste do plano: só sugere, quem decide é o aluno ----------
 EC.localISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 EC.scoreTrend = function(){

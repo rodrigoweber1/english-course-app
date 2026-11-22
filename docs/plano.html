@@ -62,9 +62,12 @@ for (const d of days) {
 }
 html += '</table>';
 
-// Pruebas intermedias (semanas 8,16,24,32,40 do ciclo padrão)
-const offset = p.phases[0].id === 0 ? p.phases[0].weeks : 0;
-html += '<h2>Upcoming tests</h2><p class="hint">Progress tests in weeks 8, 16, 24, 32 and 40 of the cycle, plus a final assessment.</p><p>' + [8,16,24,32,40].map(w => { const wv = w + offset; return `<span class="pill">Week ${wv}${wk >= wv ? ' ✓' : ''}</span>`; }).join(' ') + '</p>';
+// Provas de checkpoint
+const cps = level ? EC.checkpointList() : [], cdue = EC.checkpointDue();
+html += '<h2>Progress tests</h2><p class="hint">Checkpoint tests in weeks 8, 16, 24, 32 and 40 of the cycle, plus a final assessment. Each one uses the same format as the placement test and compares your level with the last one. They never change your plan.</p>';
+if (!level) html += '<p class="hint">They unlock after the placement test.</p>';
+else html += '<p>' + cps.map(c => `<span class="pill">${c.final ? 'Final' : 'Week ' + c.week}${c.done ? (c.done.skipped ? ' · skipped' : ' ✓ ' + EC.esc(c.done.overall)) : c.due ? ' · due' : ''}</span>`).join(' ') + '</p>';
+if (cdue) html += `<div class="card" style="border-color:var(--primary)"><b>${cdue.final ? 'Final assessment' : 'Checkpoint test · week ' + cdue.week} is available</b><p>About 30 minutes. It is a good moment to measure your progress.</p><a class="btn primary" href="prova.html?checkpoint=${cdue.week}">Start the test</a></div>`;
 
 // Progresso
 const minutes = sessions.reduce((a,x)=>a+(x.minutes||0),0), spoken = sessions.reduce((a,x)=>a+(x.userMin||0),0);
