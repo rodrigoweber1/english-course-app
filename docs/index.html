@@ -21,6 +21,8 @@
   .clock{font-variant-numeric:tabular-nums;font-weight:600}
   .phases{max-width:720px;margin:8px auto 0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;list-style:none;padding:0}
   .phases li{font-size:15px;text-align:center;padding:6px 1px;overflow:hidden;border-radius:8px;border:1px solid var(--border);color:var(--muted)}
+  .msg.score{align-self:stretch;max-width:none;background:var(--tint);border-color:var(--primary)}
+  .msg.score b{font-size:1.15em}
   .phases li small{display:block;font-size:13px;opacity:.85}
   @media (max-width:420px){.phases li{font-size:12px}}
   .phases li.done{color:var(--ok);border-color:var(--ok)}
@@ -122,6 +124,13 @@ const PHASES = [
   { key:'closing', name:'Closing',   min:1 },
 ];
 const LONG_SECONDS = 90;
+const FOCUS = {
+  warmup: 'ease and naturalness in small talk, fluency, willingness to speak at length, range of everyday language',
+  input: 'comprehension of the snippet, quality of the summary or reaction, ability to pick out detail and give an opinion',
+  guided: 'fluency, development and coherence of ideas, range and accuracy of grammar and vocabulary, argumentation, interaction',
+  grammar: 'accuracy and control of the target structure, ability to produce it in new sentences, self-correction',
+  closing: 'clarity and completeness of the spoken summary, organisation, accuracy',
+};
 const ICON_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>';
 const ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
 
@@ -130,6 +139,7 @@ const chat = $('chat'), statusEl = $('status'), micBtn = $('mic'), textEl = $('t
 const history = [];
 let phase = 0, busy = false, listening = false, rec = null, britishVoice = null;
 let startedAt = 0, userMs = 0, tutorMs = 0, micStart = 0, clockTimer = null;
+const phaseStart = [0], phaseScores = [], scorePending = [];
 let paused = false, pauseStart = 0, pausedMs = 0;
 let longMode = false, longTimer = null; const lowConf = [];
 
@@ -257,6 +267,26 @@ $('longBtn').onclick = () => {
   startListening(); setStatus('Long turn: Emma will not interrupt.');
 };
 
+// Nota ao fim de cada fase (a avaliação roda em segundo plano)
+function scorePhase(i){
+  const P = PHASES[i];
+  const seg = history.slice(phaseStart[i] || 0);
+  const turns = seg.filter(m => m.role === 'user' && !m.content.startsWith('(') && !m.content.startsWith('Hello! Please'));
+  const d = document.createElement('div'); d.className = 'msg score';
+  const set = html => { d.innerHTML = html; chat.scrollTop = chat.scrollHeight; };
+  chat.append(d);
+  if (!turns.length) { phaseScores[i] = null; set(`<b>${EC.esc(P.name)}</b> <span class="hint">· not enough speech to score this phase.</span>`); return; }
+  set(`<b>${EC.esc(P.name)}</b> <span class="hint">· scoring…</span>`);
+  const job = EC.evaluate('phase_score', { phase: P.name, focus: FOCUS[P.key], transcript: seg.filter(m => !m.content.startsWith('(')) })
+    .then(r => {
+      const sc = Math.max(0, Math.min(10, Math.round(+r.score * 10) / 10));
+      phaseScores[i] = { phase: P.name, score: sc, comment: r.comment, tip: r.tip };
+      set(`<b>${EC.esc(P.name)}: ${sc}/10</b><br>${EC.esc(r.comment)}<br><span class="hint">Tip: ${EC.esc(r.tip)}</span>`);
+    })
+    .catch(e => { phaseScores[i] = null; set(`<b>${EC.esc(P.name)}</b> <span class="hint">· could not score: ${EC.esc(e.message)}</span>`); });
+  scorePending.push(job);
+}
+
 // Pausa: congela o relógio, cala a Emma e bloqueia os botões
 $('pause').onclick = () => {
   const ctl = ['mic','send','longBtn','next','text'].map($);
@@ -279,7 +309,8 @@ $('pause').onclick = () => {
 $('next').onclick = () => {
   if (busy || listening) return;
   if (phase >= PHASES.length-1) return;
-  phase++; renderPhases(); setStatus('');
+  scorePhase(phase);
+  phase++; phaseStart[phase] = history.length; renderPhases(); setStatus('');
   history.push({ role:'user', content:'(Let us move on to the next part of the lesson.)' });
   ask();
   if (phase === PHASES.length-1) $('next').disabled = true;
@@ -287,6 +318,7 @@ $('next').onclick = () => {
 $('end').onclick = async () => {
   speechSynthesis.cancel(); if (listening) rec.stop();
   clearInterval(clockTimer);
+  scorePhase(phase);
   if (paused) { pausedMs += Date.now() - pauseStart; paused = false; }
   const el = elapsed(), tot = userMs + tutorMs, up = tot ? Math.round(userMs/tot*100) : 0;
   const userMsgs = history.filter(m => m.role === 'user' && !m.content.startsWith('(') && !m.content.startsWith('Hello! Please'));
@@ -294,9 +326,15 @@ $('end').onclick = async () => {
   const metrics = { minutes: +(el/60).toFixed(1), userPct: up, tutorPct: tot ? 100-up : 0, userWords: words, wpm: userMs > 5000 ? Math.round(words / (userMs/60000)) : null, avgTurnWords: userMsgs.length ? Math.round(words/userMsgs.length) : 0, turns: userMsgs.length };
   const sid = 'lesson-' + EC.today() + '-' + Date.now();
   const log = EC.get('sessions', []); log.push({ id:sid, date: EC.today(), minutes: metrics.minutes, userMin: +(userMs/60000).toFixed(1), userPct: up, wpm: metrics.wpm, type: PHASES[phase].name }); EC.set('sessions', log);
-  $('sumbody').innerHTML = `<p>Duration: <b>${fmt(el)}</b><br>You spoke: <b>${up}%</b> · Emma: <b>${tot ? 100-up : 0}%</b>${metrics.wpm ? `<br>Words per minute: <b>${metrics.wpm}</b>` : ''}</p><p class="hint" id="repst">Generating report…</p><div id="rep"></div>
+  $('sumbody').innerHTML = `<p>Duration: <b>${fmt(el)}</b><br>You spoke: <b>${up}%</b> · Emma: <b>${tot ? 100-up : 0}%</b>${metrics.wpm ? `<br>Words per minute: <b>${metrics.wpm}</b>` : ''}</p><div id="phsc"></div><p class="hint" id="repst">Generating report…</p><div id="rep"></div>
   <p>Did you enjoy today's topic? <button id="up" aria-label="Liked">👍</button> <button id="down" aria-label="Disliked">👎</button></p>`;
   $('summary').style.display = 'flex';
+  Promise.all(scorePending).then(() => {
+    const got = phaseScores.filter(Boolean); if (!got.length) return;
+    const avg = Math.round(got.reduce((a,x) => a + x.score, 0) / got.length * 10) / 10;
+    $('phsc').innerHTML = `<h3>Phase scores</h3><p>${got.map(x => `${EC.esc(x.phase)}: <b>${x.score}/10</b>`).join(' · ')}<br>Average: <b>${avg}/10</b></p>`;
+    const lg = EC.get('sessions', []), me = lg.find(x => x.id === sid); if (me) { me.scores = got.map(x => ({ phase:x.phase, score:x.score })); me.avgScore = avg; EC.set('sessions', lg); }
+  });
   const rate = v => { const t = EC.get('topicRatings', []); t.push({ date: EC.today(), v, interests: interestsText() }); EC.set('topicRatings', t); $('up').disabled = $('down').disabled = true; };
   $('up').onclick = () => rate(1); $('down').onclick = () => rate(-1);
   if (userMsgs.length < 2) { $('repst').textContent = 'Too little speech to generate a report.'; return; }
