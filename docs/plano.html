@@ -26,7 +26,7 @@ if (!level) {
 }
 const p = EC.plan(level, s);
 const wk = Math.min(p.total, EC.weekNow(p, s));
-html += `<div class="card"><b>Starting level:</b> ${EC.esc(level?.overall || 'B2+ (default)')}${level?.external ? ' · external test: ' + EC.esc(level.external) : ''}<br>
+html += `<div class="card"><b>Starting level:</b> ${EC.esc(level?.overall || 'B2+ (default)')}${level?.external ? ' · EF SET reading: ' + EC.esc(level.external) : ''}${level?.listening ? ' · EF SET listening: ' + EC.esc(level.listening) : ''}<br>
 <b>Cycle:</b> ${p.total} weeks, from ${fmt(p.start)} to ${fmt(p.end)}${p.paused ? ` (includes ${p.paused} days of pause)` : ''}<br>
 <b>Now:</b> week ${wk} of ${p.total}
 <div class="pbar" style="margin-top:8px"><i style="width:${wk/p.total*100}%"></i></div>

@@ -382,3 +382,41 @@ EC.signOut = async () => {
 };
 // Guarda: com o Supabase configurado, só entra quem estiver logado
 if (EC.authOn && !/login\.html$/.test(location.pathname) && !EC.session()) location.replace('login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() || 'index.html'));
+
+
+// ---------- Backup do progresso ----------
+EC.backupKeys = () => Object.keys(localStorage).filter(k => k.startsWith('ec_') && !['ec_auth', 'ec_pw', 'ec_lastBackup'].includes(k));
+EC.backupData = () => { const keys = {}; EC.backupKeys().forEach(k => { keys[k] = localStorage.getItem(k); }); return { app: 'english-course', version: 1, date: new Date().toISOString(), keys }; };
+EC.backupRestore = obj => {
+  if (!obj || obj.app !== 'english-course' || typeof obj.keys !== 'object') throw new Error('This file is not an English Course backup.');
+  EC.backupKeys().forEach(k => localStorage.removeItem(k));
+  Object.entries(obj.keys).forEach(([k, v]) => { if (/^ec_[\w-]+$/.test(k) && !['ec_auth', 'ec_pw'].includes(k) && typeof v === 'string') localStorage.setItem(k, v); });
+  return Object.keys(obj.keys).length;
+};
+
+// ---------- Gasto estimado com a IA (preços por milhão de tokens; são estimativas) ----------
+EC.PRICES = { haiku: { in: 1, out: 5 }, sonnet: { in: 3, out: 15 } };
+EC.costOf = (model, v) => { const p = /haiku/.test(model) ? EC.PRICES.haiku : EC.PRICES.sonnet; return ((v.input || 0) * p.in + (v.output || 0) * p.out) / 1e6; };
+EC.totalSpent = u => { let t = 0, calls = 0; Object.values(u || {}).forEach(m => Object.entries(m).forEach(([model, v]) => { t += EC.costOf(model, v); calls += v.calls || 0; })); return { usd: t, calls }; };
+
+// ---------- Feedback do aluno sobre a qualidade da IA ----------
+// Pede no momento certo: nas 3 primeiras vezes de cada tipo e depois no máximo a cada 28 dias.
+EC.feedbackDue = kind => {
+  const l = EC.get('aiFeedback', []).filter(x => x.kind === kind);
+  if (l.length < 3) return true;
+  const last = l[l.length - 1].date; return (Date.now() - new Date(last).getTime()) / 864e5 >= 28;
+};
+EC.askFeedback = (el, kind, label, ctx) => {
+  if (!el || !EC.feedbackDue(kind)) return;
+  const opts = [['fair', 'Fair and useful'], ['harsh', 'Too harsh'], ['generous', 'Too generous'], ['wrong', 'Something looked wrong']];
+  el.innerHTML = `<div class="card" style="margin:14px 0"><b>Quick check</b><p style="margin:6px 0 10px">${EC.esc(label)}</p><div class="row" id="fbOpts">${opts.map(([v, t]) => `<button data-v="${v}">${t}</button>`).join('')}</div><div id="fbNote" hidden><label for="fbText" style="margin-top:10px">What was it? (optional)</label><input type="text" id="fbText" style="width:100%"><p style="margin-top:10px"><button class="primary" id="fbSave">Save feedback</button></p></div><p class="hint" id="fbDone" role="status"></p></div>`;
+  let pick = null;
+  const done = msg => { el.querySelector('#fbNote').hidden = true; el.querySelector('#fbOpts').hidden = true; el.querySelector('#fbDone').textContent = msg; };
+  const save = note => { const l = EC.get('aiFeedback', []); l.push({ kind, date: new Date().toISOString(), v: pick, note: note || '', ctx: ctx || '' }); EC.set('aiFeedback', l); done('Thank you. Your feedback was saved in Settings, so we can improve Emma.'); };
+  el.querySelectorAll('#fbOpts button').forEach(b => b.onclick = () => {
+    pick = b.dataset.v;
+    if (pick === 'fair') return save('');
+    el.querySelector('#fbNote').hidden = false; el.querySelector('#fbText').focus();
+  });
+  el.querySelector('#fbSave').onclick = () => save(el.querySelector('#fbText').value.trim());
+};

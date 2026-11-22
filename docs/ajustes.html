@@ -40,6 +40,15 @@
 
 <h2>API spending</h2>
 <div class="card" id="usage" class="muted">—</div>
+<label for="credit">My API credit (US$)</label><input type="number" id="credit" min="1" step="1" style="width:110px">
+
+<h2>Feedback on Emma</h2>
+<div class="card" id="fbBox"><p class="hint">No feedback yet. Emma will ask you, at the right moments, whether her scores and corrections felt fair.</p></div>
+
+<h2>Backup</h2>
+<p class="hint">Your progress lives only in this browser. Save a copy to a file now and then, and keep it somewhere safe (for example in OneDrive). Use it to restore everything on another computer or after clearing the browser.</p>
+<div class="row"><button id="bkOut">Export my progress</button><button id="bkIn">Import from a file</button><input type="file" id="bkFile" accept=".json,application/json" hidden></div>
+<p class="hint" id="bkNote"></p>
 
 <div class="row" style="margin-top:20px"><button class="primary" id="save">Save</button><button id="ics">Export calendar (.ics)</button><button id="iph" style="display:none">Add to iPhone Calendar</button></div>
 <p class="hint" id="iphnote">On your iPhone: open this page in Safari and tap "Add to iPhone Calendar". Your lessons, listening and writing slots, with reminders, go straight into the Calendar app.</p>
@@ -86,11 +95,51 @@ save.onclick = () => { read(); if (!s.planStart) s.planStart = EC.today(); EC.se
 const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 if (iOS) { iph.style.display = ''; iph.onclick = () => { read(); location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(EC.icsExport(s)); }; document.getElementById('iphnote').textContent = 'Tap "Add to iPhone Calendar" and then "Add All". Reminders are included.'; }
 ics.onclick = () => { read(); const b = new Blob([EC.icsExport(s)], { type:'text/calendar' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'english-course.ics'; a.click(); };
-EC.api('/api/usage').then(u => {
+function drawUsage(u){
+  const sp = EC.totalSpent(u), credit = +s.credit || 5, pct = Math.min(100, sp.usd / credit * 100), left = Math.max(0, credit - sp.usd);
+  const col = pct >= 90 ? '#c0392b' : pct >= 70 ? '#d98c00' : 'var(--primary)';
   const m = new Date().toISOString().slice(0,7), d = u[m] || {};
-  const rows = Object.entries(d).map(([k,v]) => `<tr><td>${EC.esc(k)}</td><td>${v.calls} calls</td><td>${v.input} input / ${v.output} output tokens</td></tr>`).join('');
-  document.getElementById('usage').innerHTML = rows ? `<table>${rows}</table><p class="hint">Budget: US$ ${s.budget}/month. Also set this limit in the Anthropic console.</p>` : '<p class="hint">No usage recorded this month. Budget: US$ ' + s.budget + '/month.</p>';
-}).catch(()=>{});
+  const rows = Object.entries(d).map(([k,v]) => `<tr><td>${EC.esc(k)}</td><td>${v.calls} calls</td><td>${v.input} in / ${v.output} out tokens</td><td>≈ US$ ${EC.costOf(k, v).toFixed(2)}</td></tr>`).join('');
+  document.getElementById('usage').innerHTML = `<p style="margin:0 0 6px"><b>US$ ${sp.usd.toFixed(2)}</b> used of US$ ${credit.toFixed(2)} · <b>US$ ${left.toFixed(2)}</b> left (${Math.round(pct)}%)</p>
+    <div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-label="API credit used"><i style="width:${pct}%;background:${col}"></i></div>
+    ${pct >= 90 ? '<p class="err">Almost out of credit. Add more in the Anthropic console.</p>' : pct >= 70 ? '<p class="hint">You have used most of your credit.</p>' : ''}
+    ${rows ? `<h3>This month</h3><table>${rows}</table>` : ''}
+    <p class="hint">This is an estimate of every call made through this app since it started (${sp.calls} calls). The exact balance is in the Anthropic console, which is the number to trust.</p>`;
+}
+const loadUsage = () => EC.api('/api/usage').then(drawUsage).catch(() => { document.getElementById('usage').innerHTML = '<p class="hint">Start the app with iniciar.bat to see your spending.</p>'; });
+loadUsage();
+credit.value = s.credit || 5;
+credit.onchange = () => { s.credit = Math.max(1, +credit.value || 5); EC.set('settings', { ...EC.get('settings', {}), credit: s.credit }); loadUsage(); };
+
+// Feedback guardado
+(function(){
+  const l = EC.get('aiFeedback', []); if (!l.length) return;
+  const N = { fair:'Fair and useful', harsh:'Too harsh', generous:'Too generous', wrong:'Something looked wrong' }, K = { lesson:'Lesson report', writing:'Writing marking', placement:'Placement test' };
+  fbBox.innerHTML = l.slice(-8).reverse().map(x => `<p style="margin:6px 0">${x.date.slice(0,10)} · <b>${K[x.kind]||x.kind}</b>: ${N[x.v]||x.v}${x.note ? ' — ' + EC.esc(x.note) : ''}</p>`).join('') + `<p><button id="fbCopy">Copy feedback to share with Claude</button> <span class="hint" id="fbMsg"></span></p>`;
+  fbCopy.onclick = async () => { const t = l.map(x => `${x.date.slice(0,10)} | ${x.kind} | ${x.v}${x.note ? ' | ' + x.note : ''}${x.ctx ? ' | ' + x.ctx : ''}`).join('\n'); try { await navigator.clipboard.writeText(t); fbMsg.textContent = 'Copied. Paste it in the chat.'; } catch { fbMsg.textContent = 'Could not copy.'; } };
+})();
+
+// Backup
+(function(){
+  const last = (() => { try { return localStorage.getItem('ec_lastBackup'); } catch { return null; } })();
+  bkNote.textContent = last ? 'Last backup: ' + new Date(last).toLocaleString('en-GB') : 'You have not made a backup yet.';
+  bkOut.onclick = () => {
+    const b = new Blob([JSON.stringify(EC.backupData(), null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'english-course-backup-' + EC.today() + '.json'; a.click();
+    try { localStorage.setItem('ec_lastBackup', new Date().toISOString()); } catch {}
+    bkNote.className = 'okc'; bkNote.textContent = 'Backup saved to your Downloads folder. Move it somewhere safe.';
+  };
+  bkIn.onclick = () => bkFile.click();
+  bkFile.onchange = async () => {
+    const f = bkFile.files[0]; if (!f) return; bkFile.value = '';
+    let obj; try { obj = JSON.parse(await f.text()); } catch { bkNote.className = 'err'; bkNote.textContent = 'This file could not be read.'; return; }
+    if (!obj || obj.app !== 'english-course') { bkNote.className = 'err'; bkNote.textContent = 'This file is not an English Course backup.'; return; }
+    const when = obj.date ? new Date(obj.date).toLocaleString('en-GB') : 'unknown date';
+    if (!confirm('Replace ALL the progress in this browser with the backup from ' + when + '? What is here now will be lost.')) return;
+    try { const n = EC.backupRestore(obj); bkNote.className = 'okc'; bkNote.textContent = 'Backup restored (' + n + ' items). Reloading…'; setTimeout(() => location.reload(), 900); }
+    catch (e) { bkNote.className = 'err'; bkNote.textContent = e.message; }
+  };
+})();
 fill();
 </script>
 </body>

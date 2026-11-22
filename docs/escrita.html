@@ -53,9 +53,10 @@ async function submit(box, out, btn){
     out.innerHTML = `<div class="card"><b>Score: ${total}/20</b>${Object.entries(S).map(([k,v])=>`<p class="sc"><span>${names[k]}: <b>${v.score}/5</b></span><span class="muted">${EC.esc(v.comment)}</span></p>`).join('')}</div>
       <h2>Your text and the corrected version</h2><div class="cols"><div class="card"><b>Your text</b><p>${EC.esc(text).replace(/\n/g,'<br>')}</p></div><div class="card"><b>Corrected</b><p>${EC.diffHtml(text.replace(/\s+/g,' '), (r.corrected||'').replace(/\s+/g,' '))}</p></div></div>
       <p class="hint"><del>removed</del> / <ins>added</ins></p>
-      <h2>Compulsory rewrite</h2><p class="muted">Rewrite the marked sentences. The AI checks whether they are now correct.</p>
+      <div id="fbW"></div><h2>Compulsory rewrite</h2><p class="muted">Rewrite the marked sentences. The AI checks whether they are now correct.</p>
       <div id="rw">${(r.errors||[]).slice(0,8).map((e,i)=>`<div class="card"><p>${EC.esc(e.original)}</p><p class="hint">${EC.esc(e.type)}: ${EC.esc(e.explanation)}</p><input type="text" data-i="${i}" style="width:100%" aria-label="Rewrite the sentence"></div>`).join('') || '<p class="hint">No marked errors.</p>'}</div>
       <button id="chk" class="primary">Check my rewrite</button><div id="chkout"></div><p class="hint">In your next lesson, Emma will ask you to defend the ideas in your text aloud.</p>`;
+    EC.askFeedback(document.getElementById('fbW'), 'writing', 'Was this marking fair and were the corrections useful?', task.name + ' ' + total + '/20');
     EC.set('lastWriting', { date: EC.today(), task: task.task, text: text.slice(0, 1500) });
     if (window.chk) chk.onclick = async () => {
       const items = [...rw.querySelectorAll('input')].map(inp => ({ original: r.errors[inp.dataset.i].original, correction: r.errors[inp.dataset.i].correction, rewrite: inp.value }));

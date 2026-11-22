@@ -68,7 +68,7 @@ function intro(){
   ${CP && prevL ? `<div class="card"><b>Your last measured level:</b> ${EC.esc(prevL.overall)} · ${EC.esc(prevL.date)}</div>` : (last ? `<div class="card"><b>Last result:</b> ${EC.esc(last.overall)} · ${EC.esc(last.date)}</div>` : '')}
   <div class="card"><b>Parts</b><ol>
    <li>Grammar and vocabulary (≈10 min)</li><li>Reading (≈5 min)</li><li>Writing (≈5 min, AI marking)</li>
-   <li>Listening <span class="pill">pending: arrives with authentic audio</span></li>
+   <li>Listening <span class="pill">free test: EF SET (see the result page)</span></li>
    <li>Speaking: interview with Emma (≈10 min, AI)</li></ol>
    <p class="hint">The AI parts need the API key. You can do some parts now and continue later.</p></div>
   <div class="row"><button class="primary" id="g1">1. Grammar and vocabulary</button><button id="g2">2. Reading</button><button id="g3">3. Writing</button><button id="g5">5. Speaking</button><button id="gr">See result</button></div>`;
@@ -164,17 +164,19 @@ function result(){
   const hs2 = EC.get('level_history', []), prev2 = hs2.length ? hs2[hs2.length-1] : null;
   const trend = (CP && prev2) ? (avg > prev2.avg + .15 ? '▲ up from ' : avg < prev2.avg - .15 ? '▼ down from ' : '= same as ') + prev2.overall : '';
   app.innerHTML = `<h1>${CP ? 'Checkpoint result · week ' + CP : 'Result'}</h1><div class="card"><h2 style="margin-top:0">Estimated overall level: ${EC.esc(overall)}</h2>${trend ? `<p><b>${trend}</b> (last time)</p>` : ''}
-   <table>${parts.map(([n,p]) => `<tr><td>${n}</td><td>${p ? EC.esc(p.cefr || label(p.score)) : '<span class="muted">not taken</span>'}</td></tr>`).join('')}<tr><td>Listening comprehension</td><td class="muted">pending</td></tr></table>
+   <table>${parts.map(([n,p]) => `<tr><td>${n}</td><td>${p ? EC.esc(p.cefr || label(p.score)) : '<span class="muted">not taken</span>'}</td></tr>`).join('')}<tr><td>Listening comprehension</td><td class="muted">take the free EF SET below</td></tr></table>
    ${done.length < 4 ? '<p class="hint">Partial result: complete the other parts for a more reliable estimate.</p>' : ''}</div>
-   <div class="card" ${CP ? 'style="display:none"' : ''}><b>External test</b><p class="hint">Also take a free test (EF SET or Cambridge English) and note the level to compare.</p><label>External test level</label><select id="ext"><option value="">—</option>${['A2','B1','B2','C1','C2'].map(l=>`<option>${l}</option>`).join('')}</select></div>
+   <div class="card" ${CP ? 'style="display:none"' : ''}><b>Listening: free EF SET test</b><p>This app does not test listening yet, so use the free EF SET. Take the <b>listening</b> test (about 25 minutes) and, if you like, the <b>reading</b> test.</p><p><a class="btn" href="https://www.efset.org/" target="_blank" rel="noopener">Open EF SET (new tab)</a></p><label>EF SET listening level</label><select id="extL"><option value="">—</option>${['A1','A2','B1','B2','C1','C2'].map(l=>`<option>${l}</option>`).join('')}</select><label>EF SET reading level (optional)</label><select id="ext"><option value="">—</option>${['A1','A2','B1','B2','C1','C2'].map(l=>`<option>${l}</option>`).join('')}</select><p class="hint">You can fill this in later: the levels are saved with your plan.</p></div>
+   <div id="fbHere"></div>
    <div class="row"><button class="primary" id="save">${CP ? 'Save checkpoint' : 'Save and create my plan'}</button><button onclick="intro()">Back</button></div>`;
+  EC.askFeedback(document.getElementById('fbHere'), 'placement', 'Does this level estimate feel right to you?', overall);
   save.onclick = () => {
     if (CP) {
       const hist = EC.get('level_history', []); hist.push({ date: EC.today(), overall, avg, checkpoint: CP }); EC.set('level_history', hist);
       const cps = EC.get('checkpoints', {}); cps[CP] = { date: EC.today(), overall, avg };
       EC.checkpointList().forEach(c => { if (c.week < CP && !c.done) cps[c.week] = { skipped: true, date: EC.today() }; }); EC.set('checkpoints', cps); EC.set(DRAFT, {}); location.href = 'plano.html'; return;
     }
-    EC.set('level', { overall, avg, date: EC.today(), parts: Object.fromEntries(parts.map(([n,p]) => [n, p ? (p.cefr || label(p.score)) : null])), external: ext.value || null });
+    EC.set('level', { overall, avg, date: EC.today(), parts: Object.fromEntries(parts.map(([n,p]) => [n, p ? (p.cefr || label(p.score)) : null])), external: ext.value || null, listening: extL.value || null });
     const hist = EC.get('level_history', []); hist.push({ date: EC.today(), overall, avg }); EC.set('level_history', hist);
     EC.set(DRAFT, {}); location.href = 'plano.html';
   };
