@@ -117,3 +117,6 @@ header h1{display:none}
 .setup .txt .hint{font-size:15px}
 .setup a.go{min-height:40px;padding:0 16px;text-decoration:none}
 .setup a.chg{color:var(--primary);font-size:15px;text-decoration:underline}
+/* Telas de abertura e de resumo: rolam quando não cabem, sem cortar o topo */
+#start,#summary{overflow-y:auto;align-items:flex-start!important;padding:76px 16px 24px!important}
+#start .card,#summary .card{margin:auto}
