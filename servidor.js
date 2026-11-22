@@ -62,12 +62,12 @@ async function claude({ model, system, messages, max_tokens }) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model, max_tokens, system, messages }),
+    body: JSON.stringify({ model, max_tokens, system, messages, thinking: { type: 'disabled' } }),
   });
   const data = await r.json();
   if (!r.ok) throw new Error(data.error?.message || 'API error');
   addUsage(model, data.usage);
-  return data.content?.[0]?.text ?? '';
+  return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
 }
 function parseJson(t) { const m = t.match(/\{[\s\S]*\}/); return JSON.parse(m ? m[0] : t); }
 
