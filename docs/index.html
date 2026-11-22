@@ -161,7 +161,11 @@ function tick(){
   $('uBar').style.width = (tot ? up : 0) + '%';
   const left = phaseTargetEnd(phase) - el, P = PHASES[phase];
   $('phaseinfo').textContent = P.name + ' (' + P.min + ' min): ' + (left >= 0 ? fmt(left) + ' left' : 'over by ' + fmt(-left)) + ' · whole lesson: 30 min';
-  if (!paused && phase < PHASES.length-1 && el > phaseTargetEnd(phase) + 30) setStatus('This phase has run over time. Click "Next phase" whenever you like.');
+  // Tempo da fase acabou: avança sozinho, assim que ninguém estiver falando
+  if (!paused && left <= 0) {
+    if (phase < PHASES.length-1) { if (!busy && !listening && !longMode && !speechSynthesis.speaking) $('next').click(); else setStatus('Time is up for this phase: moving on as soon as the current turn ends.'); }
+    else setStatus('The 30 minutes are over. Click "End lesson" to see your report.');
+  }
 }
 function tutorShare(){ const t = userMs + tutorMs; return t > 20000 ? tutorMs/t : 0; }
 
