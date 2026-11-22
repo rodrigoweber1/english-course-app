@@ -25,7 +25,20 @@ const EC = {
     const items = [['index.html','Lesson'],['prova.html','Placement test'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['interesses.html','Interests'],['ajustes.html','Settings']];
     const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Main menu');
     n.innerHTML = items.map(([h,t]) => `<a href="${h}" ${h===active?'class="on" aria-current="page"':''}>${t}</a>`).join('');
+    const z = document.createElement('span'); z.className = 'ecz';
+    z.innerHTML = '<button type="button" aria-label="Smaller text" title="Smaller text">A−</button><button type="button" aria-label="Larger text" title="Larger text">A+</button>';
+    const [bm, bp] = z.querySelectorAll('button');
+    bm.onclick = () => EC.zoom(-1); bp.onclick = () => EC.zoom(1);
+    n.appendChild(z);
     document.body.prepend(n);
+  },
+
+  // Tamanho do texto (A− / A+): níveis de 0.85 a 1.6, guardado neste navegador
+  zoom(step){
+    const lv = [.85, 1, 1.15, 1.3, 1.45, 1.6];
+    let i = EC.get('zoomIdx', 1);
+    if (step) { i = Math.max(0, Math.min(lv.length - 1, i + step)); EC.set('zoomIdx', i); }
+    document.documentElement.style.zoom = lv[i];
   },
 
   // Voz britânica do sistema
@@ -192,3 +205,4 @@ EC.checkReminders = function(){
   EC.set('fired', fired);
 };
 setInterval(EC.checkReminders, 30000);
+EC.zoom();
