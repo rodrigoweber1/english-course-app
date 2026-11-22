@@ -169,7 +169,7 @@ const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.fl
 
 // Barra de fases
 function renderPhases(){
-  $('phases').innerHTML = PHASES.map((p,i) => `<li class="${i<phase?'done':i===phase?'on':''}">${i+1}. ${p.name.replace("-","2011")}<small>${p.min} min</small></li>`).join('');
+  $('phases').innerHTML = PHASES.map((p,i) => `<li class="${i<phase?'done':i===phase?'on':''}">${i+1}. ${p.name.replace('-', '‑')}<small>${p.min} min</small></li>`).join('');
 }
 const elapsed = () => ((paused ? pauseStart : Date.now()) - startedAt - pausedMs)/1000;
 function phaseTargetEnd(i){ return PHASES.slice(0,i+1).reduce((a,p)=>a+p.min,0)*60; }
