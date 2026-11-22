@@ -42,8 +42,21 @@ const EC = {
   },
 
   // Voz britânica do sistema
-  voice(){ const v = speechSynthesis.getVoices(), n = EC.get('settings', {}).voiceName; return (n && v.find(x => x.name === n)) || v.find(x => /en-GB/i.test(x.lang) && /female|sonia|libby|hazel|google uk english female/i.test(x.name)) || v.find(x => /en-GB/i.test(x.lang)) || null; },
-  speak(text, rate){
+  // As vozes do navegador carregam de forma assíncrona: espera até 1,5 s para não cair na voz padrão (não britânica)
+  voicesReady(){
+    return new Promise(res => {
+      const v = speechSynthesis.getVoices(); if (v.length) return res(v);
+      const t = setTimeout(() => res(speechSynthesis.getVoices()), 1500);
+      speechSynthesis.addEventListener('voiceschanged', () => { clearTimeout(t); res(speechSynthesis.getVoices()); }, { once: true });
+    });
+  },
+  voice(){
+    const v = speechSynthesis.getVoices(), n = EC.get('settings', {}).voiceName, gb = v.filter(x => /en[-_]GB/i.test(x.lang));
+    return (n && v.find(x => x.name === n)) || gb.find(x => /natural/i.test(x.name) && /sonia|libby|maisie|hazel|female/i.test(x.name)) || gb.find(x => /female|sonia|libby|hazel|google uk english female/i.test(x.name)) || gb[0] || v.find(x => /^en/i.test(x.lang)) || null;
+  },
+  // Mesma voz em toda a aplicação (aula, entrevista da prova, biblioteca, ajustes)
+  async speak(text, rate){
+    await EC.voicesReady();
     return new Promise(res => {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text); u.lang = 'en-GB'; u.rate = rate || EC.get('settings', {}).rate || 1;

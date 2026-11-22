@@ -192,16 +192,9 @@ function pickVoice(){
 }
 speechSynthesis.onvoiceschanged = pickVoice; pickVoice();
 
-function speak(text){
-  return new Promise(res => {
-    if (!$('voiceOut').checked) return res();
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-GB'; if (britishVoice) u.voice = britishVoice;
-    const t0 = Date.now();
-    u.onend = u.onerror = () => { tutorMs += Date.now() - t0; res(); };
-    speechSynthesis.speak(u);
-  });
+async function speak(text){
+  if (!$('voiceOut').checked) return;
+  const t0 = Date.now(); await EC.speak(text); tutorMs += Date.now() - t0;
 }
 
 async function ask(phaseKey){
