@@ -126,3 +126,23 @@ header h1{display:none}
 .cliptitle{font-family:var(--font-head);font-weight:700;margin-right:auto}
 .clipbox button{min-height:40px;padding:0 12px;font-size:15px}
 .cliptext{margin:8px 0 0;font-style:italic}
+
+/* Login */
+.ecout{margin-left:8px;min-height:36px;padding:0 14px;font-size:15px;border-radius:999px;flex:none}
+.login{max-width:420px;margin:0 auto;padding:40px 16px 64px;text-align:center}
+.login .logo.big{width:68px;height:68px;border-radius:22px;margin:0 auto 12px;display:grid;place-items:center;color:#fff;font:700 38px var(--font-head);background:linear-gradient(145deg,#6366F1,#3730A3);box-shadow:0 5px 0 #312E81,0 18px 30px -12px rgba(79,70,229,.6)}
+.login h1{margin:6px 0 4px}.login .lead{margin:0 0 20px}
+.login .card{text-align:left;padding:22px}
+.login label{display:block;font-weight:500;margin:14px 0 6px;font-size:16px}
+.login input{width:100%;min-height:50px}
+.pwrow{display:flex;gap:8px}.pwrow input{flex:1;min-width:0}.pwrow button{min-width:74px;font-size:15px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border-radius:16px;background:var(--tint);margin-bottom:4px}
+.tabs button{border:0;box-shadow:none;background:transparent;border-radius:12px;min-height:44px;font-weight:600;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--card);color:var(--fg);box-shadow:0 2px 6px rgba(49,46,129,.18)}
+.login .wide{width:100%;margin-top:14px}
+.login .linkbtn{display:block;margin:14px auto 0;border:0;box-shadow:none;background:none;min-height:40px;color:var(--primary);text-decoration:underline;font-size:16px}
+.login #msg,.login #rmsg{min-height:22px;margin:12px 0 0;font-size:16px}
+.login [hidden]{display:none!important}
+input[type=email],input[type=password]{min-height:50px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--r-ctl);background:var(--card);color:var(--fg);font:inherit;max-width:100%}
+input[type=email]:focus,input[type=password]:focus{border-color:var(--primary)}
+.tabs button{white-space:nowrap;font-size:16px;padding:0 6px}

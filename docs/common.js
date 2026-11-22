@@ -8,6 +8,7 @@ const EC = {
   async api(path, body, retried){
     const pw = (() => { try { return localStorage.getItem('ec_pw') || ''; } catch { return ''; } })();
     const opts = { headers: { 'x-app-password': pw } };
+    const tok = await EC.token(); if (tok) opts.headers['Authorization'] = 'Bearer ' + tok;
     if (body) { opts.method = 'POST'; opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     const r = await fetch(path, opts);
     const d = await r.json().catch(() => ({}));
@@ -41,6 +42,9 @@ const EC = {
     const [bm, bp] = z.querySelectorAll('button');
     bm.onclick = () => EC.zoom(-1); bp.onclick = () => EC.zoom(1);
     n.appendChild(z);
+    if (EC.authOn && EC.session()) {
+      const o = document.createElement('button'); o.type = 'button'; o.className = 'ecout'; o.textContent = 'Sign out'; o.title = 'Signed in as ' + (EC.session().user?.email || ''); o.onclick = () => EC.signOut(); n.appendChild(o);
+    }
     document.body.prepend(n);
   },
 
@@ -323,3 +327,58 @@ EC.checkReminders = function(){
 };
 setInterval(EC.checkReminders, 30000);
 EC.zoom();
+
+
+// ---------- Login (Supabase Auth via REST, sem biblioteca) ----------
+EC.cfg = window.EC_CONFIG || {};
+EC.authOn = !!(EC.cfg.url && EC.cfg.anonKey);          // sem configuração: modo local, sem login
+EC.session = () => EC.get('auth', null);
+EC.authMsg = d => {
+  const m = String(d.error_description || d.msg || d.message || d.error || 'Something went wrong. Please try again.');
+  if (/invalid login/i.test(m)) return 'Wrong email or password.';
+  if (/not confirmed/i.test(m)) return 'Please confirm your email first. Check your inbox.';
+  if (/already registered|already been registered/i.test(m)) return 'There is already an account with this email. Try signing in.';
+  if (/password.*(short|least|characters)/i.test(m)) return 'Use at least 8 characters for your password.';
+  if (/rate limit|too many|security purposes/i.test(m)) return 'Too many attempts. Please wait a minute and try again.';
+  if (/same password|different from the old/i.test(m)) return 'Choose a password different from the old one.';
+  return m;
+};
+EC.authFetch = async (path, opts = {}) => {
+  let r;
+  try { r = await fetch(EC.cfg.url.replace(/\/$/, '') + '/auth/v1' + path, { ...opts, headers: { apikey: EC.cfg.anonKey, 'Content-Type': 'application/json', ...(opts.headers || {}) } }); }
+  catch { throw new Error('Could not reach the sign-in service. Check your internet connection.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(EC.authMsg(d));
+  return d;
+};
+EC.setSession = d => {
+  const s = { access_token: d.access_token, refresh_token: d.refresh_token, expires_at: d.expires_at || Math.floor(Date.now() / 1000) + (d.expires_in || 3600), user: d.user ? { id: d.user.id, email: d.user.email } : (EC.session()?.user || null) };
+  EC.set('auth', s); return s;
+};
+EC.signIn = async (email, password) => EC.setSession(await EC.authFetch('/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email, password }) }));
+EC.loginUrl = () => location.origin + location.pathname.replace(/[^/]*$/, '') + 'login.html';
+EC.signUp = async (email, password) => {
+  const d = await EC.authFetch('/signup?redirect_to=' + encodeURIComponent(EC.loginUrl()), { method: 'POST', body: JSON.stringify({ email, password }) });
+  if (d.access_token) { EC.setSession(d); return { signedIn: true }; }
+  return { signedIn: false };
+};
+EC.recover = email => EC.authFetch('/recover?redirect_to=' + encodeURIComponent(EC.loginUrl()), { method: 'POST', body: JSON.stringify({ email }) });
+EC.updatePassword = async password => {
+  const s = EC.session(); if (!s) throw new Error('Your link has expired. Please request a new one.');
+  await EC.authFetch('/user', { method: 'PUT', headers: { Authorization: 'Bearer ' + s.access_token }, body: JSON.stringify({ password }) });
+};
+// Devolve um token válido (renova se estiver para vencer); sem sessão, devolve null
+EC.token = async () => {
+  if (!EC.authOn) return null;
+  const s = EC.session(); if (!s) return null;
+  if (s.expires_at - 60 > Date.now() / 1000) return s.access_token;
+  try { return EC.setSession(await EC.authFetch('/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: s.refresh_token }) })).access_token; }
+  catch { EC.set('auth', null); if (!/login\.html$/.test(location.pathname)) location.replace('login.html'); return null; }
+};
+EC.signOut = async () => {
+  const s = EC.session();
+  try { if (s) await EC.authFetch('/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + s.access_token } }); } catch {}
+  EC.set('auth', null); location.href = 'login.html';
+};
+// Guarda: com o Supabase configurado, só entra quem estiver logado
+if (EC.authOn && !/login\.html$/.test(location.pathname) && !EC.session()) location.replace('login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() || 'index.html'));

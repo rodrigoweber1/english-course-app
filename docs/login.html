@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · English Course</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<main class="login">
+  <div class="logo big" aria-hidden="true">E</div>
+  <h1>English Course</h1>
+  <p class="muted lead">Your daily English practice with Emma.</p>
+
+  <!-- Já conectado -->
+  <section class="card" id="signedBox" hidden>
+    <p>You are signed in as <b id="who"></b>.</p>
+    <div class="row"><a class="btn primary" id="goOn" href="index.html">Continue</a><button type="button" id="out">Sign out</button></div>
+  </section>
+
+  <!-- Supabase ainda não configurado -->
+  <section class="card" id="localBox" hidden>
+    <h2 style="margin-top:0">Local mode</h2>
+    <p>Online sign-in is not connected yet. Everything works on this device, and your progress stays in this browser.</p>
+    <a class="btn primary" href="index.html">Continue</a>
+  </section>
+
+  <!-- Entrar / criar conta -->
+  <section class="card" id="authBox" hidden>
+    <div class="tabs" role="tablist" aria-label="Account">
+      <button type="button" role="tab" id="tabIn" aria-selected="true" aria-controls="form">Sign in</button>
+      <button type="button" role="tab" id="tabUp" aria-selected="false" aria-controls="form">Create account</button>
+    </div>
+    <form id="form" novalidate>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required>
+      <label for="pw">Password</label>
+      <div class="pwrow">
+        <input id="pw" type="password" autocomplete="current-password" required aria-describedby="pwhint">
+        <button type="button" id="eye" aria-label="Show password" aria-pressed="false">Show</button>
+      </div>
+      <p class="hint" id="pwhint" hidden>At least 8 characters.</p>
+      <div id="confirmRow" hidden>
+        <label for="pw2">Confirm password</label>
+        <input id="pw2" type="password" autocomplete="new-password">
+      </div>
+      <p id="msg" role="alert" class="err" aria-live="assertive"></p>
+      <button class="primary wide" id="submit" type="submit">Sign in</button>
+      <button type="button" class="linkbtn" id="forgot">Forgot your password?</button>
+    </form>
+  </section>
+
+  <!-- Nova senha (link de recuperação) -->
+  <section class="card" id="resetBox" hidden>
+    <h2 style="margin-top:0">Choose a new password</h2>
+    <form id="resetForm" novalidate>
+      <label for="np">New password</label>
+      <input id="np" type="password" autocomplete="new-password" required>
+      <label for="np2">Confirm new password</label>
+      <input id="np2" type="password" autocomplete="new-password" required>
+      <p id="rmsg" role="alert" class="err" aria-live="assertive"></p>
+      <button class="primary wide" id="rsubmit" type="submit">Save new password</button>
+    </form>
+  </section>
+</main>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const nextPage = (() => { const n = new URLSearchParams(location.search).get('next') || ''; return /^[\w.-]+\.html$/i.test(n) ? n : 'index.html'; })();
+let mode = 'in';
+const show = id => ['signedBox','localBox','authBox','resetBox'].forEach(x => $(x).hidden = x !== id);
+
+function setMode(m){
+  mode = m; const up = m === 'up';
+  $('tabIn').setAttribute('aria-selected', !up); $('tabUp').setAttribute('aria-selected', up);
+  $('submit').textContent = up ? 'Create account' : 'Sign in';
+  $('confirmRow').hidden = !up; $('pwhint').hidden = !up; $('forgot').hidden = up;
+  $('pw').autocomplete = up ? 'new-password' : 'current-password';
+  $('msg').textContent = ''; $('msg').className = 'err';
+}
+const say = (t, ok) => { $('msg').textContent = t; $('msg').className = ok ? 'okc' : 'err'; };
+const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+$('tabIn').onclick = () => setMode('in');
+$('tabUp').onclick = () => setMode('up');
+$('eye').onclick = () => {
+  const on = $('pw').type === 'password'; $('pw').type = on ? 'text' : 'password';
+  $('eye').textContent = on ? 'Hide' : 'Show'; $('eye').setAttribute('aria-pressed', on); $('eye').setAttribute('aria-label', on ? 'Hide password' : 'Show password');
+};
+
+$('form').onsubmit = async e => {
+  e.preventDefault();
+  const email = $('email').value.trim(), pw = $('pw').value;
+  if (!validEmail(email)) return say('Please enter a valid email address.');
+  if (!pw) return say('Please enter your password.');
+  if (mode === 'up') {
+    if (pw.length < 8) return say('Use at least 8 characters for your password.');
+    if (pw !== $('pw2').value) return say('The two passwords do not match.');
+  }
+  const btn = $('submit'); btn.disabled = true; btn.textContent = 'Please wait…'; say('');
+  try {
+    if (mode === 'in') { await EC.signIn(email, pw); location.href = nextPage; return; }
+    const r = await EC.signUp(email, pw);
+    if (r.signedIn) { location.href = nextPage; return; }
+    setMode('in'); $('pw').value = ''; $('pw2').value = '';
+    say('Account created. Please check your email and confirm your address, then sign in.', true);
+  } catch (err) { say(err.message); }
+  btn.disabled = false; btn.textContent = mode === 'up' ? 'Create account' : 'Sign in';
+};
+
+$('forgot').onclick = async () => {
+  const email = $('email').value.trim();
+  if (!validEmail(email)) return say('Enter your email above first, then tap "Forgot your password?".');
+  try { await EC.recover(email); say('If this email has an account, a reset link is on its way. Check your inbox.', true); }
+  catch (err) { say(err.message); }
+};
+
+$('resetForm').onsubmit = async e => {
+  e.preventDefault();
+  const a = $('np').value, b = $('np2').value, m = $('rmsg');
+  if (a.length < 8) { m.textContent = 'Use at least 8 characters.'; return; }
+  if (a !== b) { m.textContent = 'The two passwords do not match.'; return; }
+  $('rsubmit').disabled = true; m.textContent = '';
+  try { await EC.updatePassword(a); location.href = nextPage; }
+  catch (err) { m.textContent = err.message; $('rsubmit').disabled = false; }
+};
+
+$('out').onclick = () => EC.signOut();
+
+// Início: decide qual cartão mostrar
+(function(){
+  if (!EC.authOn) return show('localBox');
+  const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (h.get('error_description')) { show('authBox'); setMode('in'); return say(h.get('error_description').replace(/\+/g, ' ')); }
+  if (h.get('access_token')) {                           // veio de um link do e-mail (confirmação ou recuperação)
+    EC.setSession({ access_token: h.get('access_token'), refresh_token: h.get('refresh_token'), expires_in: +h.get('expires_in') || 3600 });
+    history.replaceState(null, '', location.pathname + location.search);
+    if (h.get('type') === 'recovery') return show('resetBox');
+    location.href = nextPage; return;
+  }
+  const s = EC.session();
+  if (s) { $('who').textContent = s.user?.email || 'your account'; $('goOn').href = nextPage; return show('signedBox'); }
+  show('authBox'); setMode('in'); $('email').focus();
+})();
+</script>
+</body>
+</html>
