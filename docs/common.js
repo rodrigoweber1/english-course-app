@@ -420,3 +420,31 @@ EC.askFeedback = (el, kind, label, ctx) => {
   });
   el.querySelector('#fbSave').onclick = () => save(el.querySelector('#fbText').value.trim());
 };
+
+
+// ---------- Versão do app, aviso de versão nova e rodapé ----------
+// Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
+EC.VERSION = '1.0.0';
+EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
+EC.checkUpdate = async () => {
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+    const v = (await r.json()).version;
+    if (!v || v === EC.VERSION || document.getElementById('ecupd')) return;
+    if (sessionStorage.getItem('ec_updLater') === v) return;
+    const b = document.createElement('div'); b.id = 'ecupd'; b.setAttribute('role', 'status');
+    b.innerHTML = `<span>A new version of Ask Emma is available (v${EC.esc(v)}; you have v${EC.VERSION}).</span><button type="button" class="primary" id="ecupdGo">Update now</button><button type="button" id="ecupdLater">Later</button>`;
+    document.body.appendChild(b);
+    b.querySelector('#ecupdGo').onclick = () => { const u = new URL(location.href); u.searchParams.set('v', v); location.replace(u.toString()); };
+    b.querySelector('#ecupdLater').onclick = () => { try { sessionStorage.setItem('ec_updLater', v); } catch {} b.remove(); };
+  } catch {}
+};
+document.addEventListener('DOMContentLoaded', () => {
+  if (!document.getElementById('chat')) {              // a tela da aula tem o rodapé dentro do cartão inicial
+    const f = document.createElement('footer'); f.className = 'ecfoot'; f.innerHTML = EC.footerHtml(); document.body.appendChild(f);
+  }
+  document.querySelectorAll('.ecfoot-slot').forEach(e => { e.className = 'ecfoot'; e.innerHTML = EC.footerHtml(); });
+  EC.checkUpdate();
+  setInterval(EC.checkUpdate, 30 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) EC.checkUpdate(); });
+});

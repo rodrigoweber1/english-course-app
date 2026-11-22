@@ -15,7 +15,7 @@ try {
 const PORT = process.env.PORT || 3000;
 const MODEL = process.env.TUTOR_MODEL || 'claude-haiku-5-5';
 const PUBLIC = path.join(__dirname, 'docs');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.json': 'application/json' };
 
 const SYSTEM = `You are Emma, a warm, curious British English tutor having a spoken conversation with an advanced learner (B2-C1) whose first languages are Spanish and Portuguese.
 Rules:
