@@ -75,7 +75,7 @@
   <h2>Lesson with Emma</h2>
   <p>A <span id="totmin">25</span>-minute lesson in 5 phases. You do most of the talking; Emma listens and asks short questions. Corrections come in the final report.</p>
   <p class="hint">Use Chrome or Edge and allow the microphone. You can type instead if you prefer.</p>
-  <p id="intNote" class="hint"></p>
+  <div id="setup" class="setup"></div>
   <div id="resumeBox" style="display:none;border:2px solid var(--primary);border-radius:12px;padding:12px;margin:12px 0">
     <b>Lesson in progress</b>
     <p id="resumeInfo" class="hint" style="margin:6px 0 10px"></p>
@@ -456,8 +456,18 @@ function interestsText(){
   const d = loadInterests(); if (!d) return '';
   return Object.entries(d.picks || {}).filter(([,v]) => v.length).map(([k,v]) => k + ': ' + v.join(', ')).join('. ');
 }
-$('intNote').textContent = loadInterests() ? 'Your interests are saved. Emma will use them.' : 'Tip: fill in the interests questionnaire so Emma can pick topics you enjoy.';
-if (!loadInterests() && $('resumeBox').style.display !== 'block') $('intBtn').classList.add('primary'), $('go').classList.remove('primary');
+// Primeiros passos do curso: 1 Interesses, 2 Prova de nível, 3 Aula
+(function(){
+  const hasInt = !!loadInterests(), hasLvl = !!EC.get('level', null), resuming = $('resumeBox').style.display === 'block';
+  const row = (n, done, title, sub, href) => `<li class="${done ? 'done' : ''}"><span class="num">${done ? '✓' : n}</span><span class="txt"><b>${title}</b><br><span class="hint">${sub}</span></span>${done ? '<a class="chg" href="'+href+'">Edit</a>' : '<a class="btn primary go" href="'+href+'">Start</a>'}</li>`;
+  $('setup').innerHTML = '<b class="sh">Getting started</b><ol>' +
+    row(1, hasInt, 'Your interests', 'Tell Emma what you enjoy talking about (3 min).', 'interesses.html') +
+    row(2, hasLvl, 'Placement test', 'Find your starting level (about 20 min).', 'prova.html') +
+    '<li class="' + (hasInt ? '' : 'locked') + '"><span class="num">3</span><span class="txt"><b>Your lesson with Emma</b><br><span class="hint">' + (hasInt ? 'Ready when you are.' : 'Unlocks after step 1.') + '</span></span></li></ol>';
+  $('go').disabled = !hasInt && !resuming;
+  if (!hasInt) $('go').title = 'Please complete the interests questionnaire first.';
+  $('intBtn').style.display = 'none';
+})();
 renderPhases();
 </script>
 </body>

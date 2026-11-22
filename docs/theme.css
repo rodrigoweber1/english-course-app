@@ -105,3 +105,15 @@ footer{background:color-mix(in srgb,var(--card) 94%,transparent)!important;box-s
 @media (max-width:1000px){.ecnav .brand b{display:none}.ecnav .brand{padding-right:10px}}
 header h1{display:none}
 .track.empty .t{background:var(--tint)!important}
+/* Primeiros passos */
+.setup{border:1.5px solid var(--border);border-radius:18px;padding:14px 16px;margin:12px 0;background:color-mix(in srgb,var(--tint) 55%,var(--card))}
+.setup .sh{font-family:var(--font-head);font-size:19px}
+.setup ol{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.setup li{display:flex;align-items:center;gap:12px}
+.setup .num{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--card);border:2px solid var(--primary);color:var(--primary)}
+.setup li.done .num{background:var(--ok);border-color:var(--ok);color:#fff}
+.setup li.locked{opacity:.55}
+.setup .txt{flex:1;line-height:1.35}
+.setup .txt .hint{font-size:15px}
+.setup a.go{min-height:40px;padding:0 16px;text-decoration:none}
+.setup a.chg{color:var(--primary);font-size:15px;text-decoration:underline}
