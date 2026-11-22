@@ -27,7 +27,7 @@ Rules:
 This is a 25-minute lesson in five phases. Follow the current phase instruction you are given.`;
 
 const PHASES = {
-  warmup: 'PHASE 1 - Warm-up (2-3 min): light, friendly small talk. If you remember something from earlier, pick it up.',
+  warmup: 'PHASE 1 - Warm-up (2-3 min, about 2.5): light, friendly small talk. If you remember something from earlier, pick it up.',
   input: 'PHASE 2 - Authentic input (5 min): no audio clip is available yet. Briefly (max 3 short sentences) describe a real-sounding snippet from an interview or documentary on a topic the learner likes, then ask open comprehension questions about it, one at a time.',
   guided: 'PHASE 3 - Guided conversation (12 min): run a debate, opinion exchange, narration or role-play based on the earlier topic. Ask open and follow-up questions; play devil\'s advocate sometimes.',
   grammar: 'PHASE 4 - Grammar focus (3-4 min): pick ONE structure from the learner\'s mistakes so far (or a C1 structure like inversion or cleft sentences). Explain it in one sentence, then ask the learner to say 3 practice sentences aloud, one at a time. For this phase only you may use up to 40 words.',
