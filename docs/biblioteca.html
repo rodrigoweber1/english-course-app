@@ -63,8 +63,10 @@ function vocab(){
     (v, said) => `${said ? `You said: ${EC.esc(said)}<br>${norm(said).join(' ').includes(norm(v.term).join(' ')) ? '<span class="okc">You used the expression.</span>' : '<span class="err">I did not hear the expression.</span>'}<br>` : ''}Answer: <b>${EC.esc(v.term)}</b>${v.example ? '<br><i>' + EC.esc(v.example) + '</i>' : ''}`, () => EC.set('vocab', all));
 }
 function errors(){
-  const all = EC.get('errors', []), pe = EC.persistentErrors();
-  view.innerHTML = `<h2>Persistent errors (3+ lessons)</h2>${pe.map(e=>`<div class="card">${EC.diffHtml(e.original, e.correction)}<br><span class="muted">${EC.esc(e.type)} · ${e.count} lessons</span></div>`).join('') || '<p class="hint">None so far.</p>'}
+  const all = EC.get('errors', []), pe = EC.persistentErrors(true), act = pe.filter(e => e.state !== 'resolved'), res = pe.filter(e => e.state === 'resolved'), train = EC.trainingErrors().map(e => e.key);
+  const badge = e => ({ active:'Active', improving:`Improving ${e.clean}/3`, relapsed:'Relapsed', resolved:'Resolved ✓' }[e.state]);
+  const card = e => `<div class="card">${EC.diffHtml(e.original, e.correction)}<br><span class="muted">${EC.esc(e.type)} · ${e.count} lessons</span> <span class="pill">${badge(e)}</span>${train.includes(e.key) ? ' <span class="pill">in training</span>' : ''}</div>`;
+  view.innerHTML = `<h2>Persistent errors (3+ lessons)</h2><p class="hint">A mistake is resolved when you avoid it on your own in 3 different lessons. Emma trains at most 5 at a time.</p>${act.map(card).join('') || '<p class="hint">None so far.</p>'}${res.length ? `<h2>Resolved (${res.length})</h2>${res.map(card).join('')}` : ''}
   <h2>All errors (${all.length})</h2>${all.slice().reverse().slice(0, 60).map(e=>`<p>${EC.diffHtml(e.original, e.correction)}<br><span class="muted">${EC.esc(e.date)} · ${EC.esc(e.type||'')} · ${EC.esc(e.explanation||'')}</span></p>`).join('') || '<p class="hint">No errors recorded.</p>'}`;
 }
 draw();

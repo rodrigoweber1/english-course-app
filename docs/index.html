@@ -401,9 +401,11 @@ $('end').onclick = async () => {
   $('up').onclick = () => rate(1); $('down').onclick = () => rate(-1);
   if (userMsgs.length < 2) { $('repst').textContent = 'Too little speech to generate a report.'; return; }
   try {
-    const r = await EC.evaluate('report', { transcript: history, metrics, lowConfidence: lowConf.slice(0, 30) });
+    const trainList = EC.trainingErrors();
+    const r = await EC.evaluate('report', { transcript: history, metrics, lowConfidence: lowConf.slice(0, 30), persistent: trainList.map((e,i) => ({ id:i, wrong:e.original, right:e.correction })) });
+    EC.addErrors(r.errors, sid); EC.applyErrorChecks(r.persistent_check, trainList, sid);
     if (r.topic) { lessonTopic = String(r.topic).slice(0, 60); const tr = EC.get('topicRatings', []); tr.forEach(x => { if (x.sid === sid && !x.topic) x.topic = lessonTopic; }); EC.set('topicRatings', tr); }
-    EC.addErrors(r.errors, sid); EC.addVocab(r.vocab); EC.addCards(r.grammar_cards);
+    EC.addVocab(r.vocab); EC.addCards(r.grammar_cards);
     const cu = EC.get('c1used', {}); (r.c1_used || []).forEach(x => cu[x] = EC.today()); EC.set('c1used', cu);
     // Expressões usadas bem sem ajuda contam para "dominada" (3 sessões distintas)
     const used = new Set(userMsgs.map(m => m.content.toLowerCase()).join(' ').split(/\W+/)); const vb = EC.get('vocab', []);

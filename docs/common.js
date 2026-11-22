@@ -128,11 +128,8 @@ const EC = {
     EC.set('cards', c);
   },
   // Erro persistente: apareceu em 3 sessões/datas diferentes (explicação curta = tipo + correção)
-  persistentErrors(){
-    const by = {};
-    for (const e of EC.get('errors', [])) { const k = (e.type || '') + '|' + (e.correction || '').toLowerCase().slice(0, 40); (by[k] = by[k] || { ...e, sessions: new Set() }).sessions.add(e.source); }
-    return Object.values(by).filter(x => x.sessions.size >= 3).map(x => ({ original: x.original, correction: x.correction, type: x.type, count: x.sessions.size }));
-  },
+  persistentErrors(all){ return EC.errorGroups().filter(x => all || x.state !== 'resolved'); },
+
 };
 speechSynthesis.onvoiceschanged = () => {};
 
@@ -140,8 +137,8 @@ speechSynthesis.onvoiceschanged = () => {};
 EC.loadC1 = () => fetch('/api/c1').then(r => r.json()).then(l => { EC.set('c1inv', l); return l; }).catch(() => EC.get('c1inv', []));
 EC.c1Status = () => { const inv = EC.get('c1inv', []), used = EC.get('c1used', {}); return { inv, used, pct: inv.length ? Math.round(inv.filter(x => used[x]).length / inv.length * 100) : 0 }; };
 EC.memoryText = function(){
-  const parts = [], pe = EC.persistentErrors();
-  if (pe.length) parts.push('Persistent errors (repeat in 3+ sessions): ' + pe.map(e => `"${e.original}" -> "${e.correction}"`).join('; '));
+  const parts = [], pe = EC.trainingErrors();
+  if (pe.length) parts.push('Persistent errors (repeat in 3+ sessions; practise at most these): ' + pe.map(e => `"${e.original}" -> "${e.correction}"` + (e.state === 'relapsed' ? ' (relapsed: the learner had fixed it before)' : '')).join('; '));
   const v = EC.get('vocab', []).filter(x => (x.uses || 0) < 3).slice(-8);
   if (v.length) parts.push('Recent expressions to practise (5-8): ' + v.map(x => x.term).join(', '));
   const c = EC.c1Status(), todo = c.inv.filter(x => !c.used[x]);
@@ -208,6 +205,38 @@ EC.icsExport = function(settings){
   add('English Course: writing task (30 min)', s.write.day, s.write.time, 30);
   out.push('END:VCALENDAR');
   return out.join('\r\n');
+};
+
+// ---------- Erros persistentes: ciclo de vida (ativo -> melhorando -> resolvido -> recaída) ----------
+EC.errKey = e => (e.type || '') + '|' + (e.correction || '').toLowerCase().slice(0, 40);
+EC.errorGroups = function(){
+  const by = {}, st = EC.get('errorStatus', {});
+  for (const e of EC.get('errors', [])) { const k = EC.errKey(e); (by[k] = by[k] || { key:k, original:e.original, correction:e.correction, type:e.type, sessions:new Set() }).sessions.add(e.source); }
+  return Object.values(by).filter(x => x.sessions.size >= 3).map(x => {
+    const s = st[x.key] || {}, clean = (s.clean || []).length;
+    let state = clean ? 'improving' : 'active';
+    if (s.resolvedAt) state = [...x.sessions].some(src => !(s.seen || []).includes(src)) ? 'relapsed' : 'resolved';
+    return { key:x.key, original:x.original, correction:x.correction, type:x.type, count:x.sessions.size, state, clean: state === 'resolved' ? 3 : clean, resolvedAt: s.resolvedAt || null };
+  });
+};
+// Fila de treino: no máximo 5 erros ativos de uma vez (recaídas primeiro, depois os mais frequentes)
+EC.trainingErrors = function(){
+  const rank = { relapsed:0, improving:1, active:2 };
+  return EC.persistentErrors().sort((a,b) => (rank[a.state] - rank[b.state]) || (b.count - a.count)).slice(0, 5);
+};
+// Aplica o veredito do relatório: avoided (3 aulas diferentes) resolve; repeated zera a contagem
+EC.applyErrorChecks = function(checks, list, sid){
+  const st = EC.get('errorStatus', {}), groups = EC.errorGroups();
+  for (const c of checks || []) {
+    const e = list[c.id]; if (!e) continue;
+    const s = st[e.key] = st[e.key] || { clean: [] };
+    const g0 = groups.find(x => x.key === e.key); if (g0 && g0.state === 'relapsed') { s.clean = []; s.resolvedAt = null; s.seen = []; }
+    if (c.status === 'avoided') {
+      if (!s.clean.includes(sid)) s.clean.push(sid);
+      if (s.clean.length >= 3) { s.resolvedAt = EC.today(); s.seen = []; EC.get('errors', []).forEach(x => { if (EC.errKey(x) === e.key) s.seen.push(x.source); }); s.seen = [...new Set(s.seen)]; }
+    } else if (c.status === 'repeated') { s.clean = []; if (s.resolvedAt) { s.resolvedAt = null; s.seen = []; } }
+  }
+  EC.set('errorStatus', st);
 };
 
 // ---------- Temas: o 👍/👎 das aulas orienta a Emma; revisão periódica dos interesses ----------
