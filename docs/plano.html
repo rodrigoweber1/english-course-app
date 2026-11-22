@@ -27,7 +27,7 @@ const wk = Math.min(p.total, EC.weekNow(p, s));
 html += `<div class="card"><b>Starting level:</b> ${EC.esc(level?.overall || 'B2+ (default)')}${level?.external ? ' · external test: ' + EC.esc(level.external) : ''}<br>
 <b>Cycle:</b> ${p.total} weeks, from ${fmt(p.start)} to ${fmt(p.end)}${p.paused ? ` (includes ${p.paused} days of pause)` : ''}<br>
 <b>Now:</b> week ${wk} of ${p.total}
-<div class="bar" style="margin-top:8px"><i style="width:${wk/p.total*100}%"></i></div>
+<div class="pbar" style="margin-top:8px"><i style="width:${wk/p.total*100}%"></i></div>
 ${p.minimum ? '' : '<p class="err">You have fewer than 2 lessons a week. The cycle has been lengthened.</p>'}
 ${!s.planStart ? '<p class="hint">Save your settings to fix the start date.</p>' : ''}</div>`;
 

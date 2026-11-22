@@ -80,7 +80,7 @@ function grammar(){
     const [b,i] = pool.length ? pool[Math.floor(Math.random()*pool.length)] : fallback[0];
     used.add(i); n++;
     const opts = shuffle(b.o.map((t,k)=>({t,ok:k===b.c})));
-    app.innerHTML = `<p class="muted">Question ${n} of 12</p><div class="bar"><i style="width:${n/12*100}%"></i></div><h2>${EC.esc(b.q)}</h2><div class="opts">${opts.map((o,k)=>`<button data-k="${k}">${EC.esc(o.t)}</button>`).join('')}</div>`;
+    app.innerHTML = `<p class="muted">Question ${n} of 12</p><div class="pbar"><i style="width:${n/12*100}%"></i></div><h2>${EC.esc(b.q)}</h2><div class="opts">${opts.map((o,k)=>`<button data-k="${k}">${EC.esc(o.t)}</button>`).join('')}</div>`;
     app.querySelectorAll('.opts button').forEach(btn => btn.onclick = () => {
       const ok = opts[btn.dataset.k].ok; hist.push({ level:b.l, ok });
       L = Math.max(0, Math.min(3, L + (ok ? 1 : -1))); next();
