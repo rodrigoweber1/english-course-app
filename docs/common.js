@@ -210,6 +210,26 @@ EC.icsExport = function(settings){
   return out.join('\r\n');
 };
 
+// ---------- Temas: o 👍/👎 das aulas orienta a Emma; revisão periódica dos interesses ----------
+EC.topicFeedback = function(){
+  const r = EC.get('topicRatings', []).filter(x => x.topic);
+  const uniq = v => [...new Set(r.filter(x => x.v === v).map(x => x.topic.toLowerCase()))].slice(-8);
+  const like = uniq(1).filter(t => !uniq(-1).includes(t)), dislike = uniq(-1);
+  let t = '';
+  if (like.length) t += 'Topics the learner enjoyed in past lessons (favour similar ones): ' + like.join(', ') + '. ';
+  if (dislike.length) t += 'Topics the learner did NOT enjoy (avoid them for now): ' + dislike.join(', ') + '.';
+  return t.trim();
+};
+EC.interestsReviewDue = function(){
+  let d = null; try { d = JSON.parse(localStorage.getItem('ec_interests') || 'null'); } catch {}
+  if (!d || !d.updated) return null;
+  const days = Math.floor((Date.now() - new Date(d.updated)) / 864e5), snooze = EC.get('interestsSnooze', 0);
+  return days >= 28 && Date.now() > snooze ? days : null;           // revisão a cada 4 semanas
+};
+EC.interestsStillFine = function(){
+  try { const d = JSON.parse(localStorage.getItem('ec_interests') || 'null'); if (d) { d.updated = new Date().toISOString(); localStorage.setItem('ec_interests', JSON.stringify(d)); } } catch {}
+};
+
 // ---------- Provas de checkpoint (semanas 8, 16, 24, 32, 40 do ciclo e avaliação final) ----------
 EC.checkpointList = function(){
   const level = EC.get('level', null), s = EC.settings(), p = EC.plan(level, s);
