@@ -32,6 +32,18 @@ html += `<div class="card"><b>Starting level:</b> ${EC.esc(level?.overall || 'B2
 ${p.minimum ? '' : '<p class="err">You have fewer than 2 lessons a week. The cycle has been lengthened.</p>'}
 ${!s.planStart ? '<p class="hint">Save your settings to fix the start date.</p>' : ''}</div>`;
 
+// Sugestão (só sugere; o aluno decide)
+const sg = EC.planSuggestion(), tr = EC.scoreTrend(), pa = EC.get('planAdjust', {});
+if (sg) {
+  html += `<div class="card" id="sugg" style="border-color:var(--primary)"><b>Suggestion</b><p>${sg.kind === 'faster'
+    ? `Your lesson scores are going up: your last 3 lessons averaged <b>${sg.recent}/10</b> (the 3 before: ${sg.prev}/10). Would you like to move <b>one week ahead</b> in the plan?`
+    : `Your last 3 lessons averaged <b>${sg.recent}/10</b> (the 3 before: ${sg.prev}/10). Would you like to spend <b>one extra week</b> consolidating?`}</p>
+  <p class="hint">This only moves the week counter and the end date. Nothing else changes, and you can undo it.</p>
+  <div class="row"><button class="primary" id="sgYes">${sg.kind === 'faster' ? 'Yes, move ahead one week' : 'Yes, add one week'}</button><button id="sgNo">Not now</button></div></div>`;
+} else if (pa.accepted && pa.undoDays && Date.now() - pa.lastAt < 14*864e5) {
+  html += `<div class="card"><p>Plan adjusted: ${pa.kind === 'faster' ? 'moved one week ahead' : 'one extra week added'}.</p><button id="sgUndo">Undo</button></div>`;
+}
+
 // Fases
 let acc = 0;
 html += '<h2>Phases</h2><table>' + p.phases.map(ph => { const a = acc + 1, b = acc + ph.weeks; acc = b; const cur = wk >= a && wk <= b; return `<tr><td>${cur ? '<b>▶ ' : ''}${EC.esc(ph.name)}${cur ? '</b>' : ''}</td><td>weeks ${a}–${b}</td></tr>`; }).join('') + '</table>';
@@ -64,11 +76,16 @@ html += `<h2>Progress</h2><div class="card"><table>
 <tr><td>Expressions learning / mastered</td><td>${vocab.length - mastered} / ${mastered}</td></tr>
 <tr><td>Grammar cards</td><td>${cards.length}</td></tr>
 <tr><td>C1 inventory you already use</td><td>${EC.c1Status().pct}%</td></tr>
+<tr><td>Lesson scores (last 6)</td><td>${tr ? tr.last.join(' · ') + ' /10' : '<span class="muted">after 6 scored lessons</span>'}</td></tr>
 <tr><td>Persistent errors</td><td>${EC.persistentErrors().length}</td></tr>
 <tr><td>Outside listening logged</td><td>${EC.get('outside', []).reduce((a,x)=>a+x.min,0)} min</td></tr></table>
 ${hist.length ? '<p><b>Level history:</b> ' + hist.map(h => `${fmt(new Date(h.date))}: ${EC.esc(h.overall)}`).join(' → ') + '</p>' : ''}</div>
 <div class="row"><a class="btn" href="ajustes.html">Change days and reminders</a><a class="btn" href="prova.html">Placement test</a></div>`;
 app.innerHTML = html;
+const reload = () => location.reload();
+if (sg) { document.getElementById('sgYes').onclick = () => { EC.answerSuggestion(sg, true); reload(); }; document.getElementById('sgNo').onclick = () => { EC.answerSuggestion(sg, false); reload(); }; }
+const un = document.getElementById('sgUndo');
+if (un) un.onclick = () => { EC.shiftPlan(-pa.undoDays); EC.set('planAdjust', { ...pa, accepted:false, undoDays:0 }); reload(); };
 </script>
 </body>
 </html>

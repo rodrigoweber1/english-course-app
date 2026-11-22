@@ -41,7 +41,8 @@
 <h2>API spending</h2>
 <div class="card" id="usage" class="muted">—</div>
 
-<div class="row" style="margin-top:20px"><button class="primary" id="save">Save</button><button id="ics">Export calendar (.ics)</button></div>
+<div class="row" style="margin-top:20px"><button class="primary" id="save">Save</button><button id="ics">Export calendar (.ics)</button><button id="iph" style="display:none">Add to iPhone Calendar</button></div>
+<p class="hint" id="iphnote">On your iPhone: open this page in Safari and tap "Add to iPhone Calendar". Your lessons, listening and writing slots, with reminders, go straight into the Calendar app.</p>
 <p id="msg" class="okc"></p>
 </div>
 <script src="common.js"></script>
@@ -81,6 +82,8 @@ function read(){
   s.quiet = { from: qFrom.value || '22:00', to: qTo.value || '07:00' }; s.rate = +rate.value || 1; s.voiceName = voiceName.value;
 }
 save.onclick = () => { read(); if (!s.planStart) s.planStart = EC.today(); EC.set('settings', s); msg.textContent = 'Settings saved.'; note(); };
+const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+if (iOS) { iph.style.display = ''; iph.onclick = () => { read(); location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(EC.icsExport(s)); }; document.getElementById('iphnote').textContent = 'Tap "Add to iPhone Calendar" and then "Add All". Reminders are included.'; }
 ics.onclick = () => { read(); const b = new Blob([EC.icsExport(s)], { type:'text/calendar' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'english-course.ics'; a.click(); };
 EC.api('/api/usage').then(u => {
   const m = new Date().toISOString().slice(0,7), d = u[m] || {};

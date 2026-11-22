@@ -192,13 +192,14 @@ EC.weekNow = function(plan, settings){
 };
 EC.icsExport = function(settings){
   const s = settings || EC.settings(), pad = n => String(n).padStart(2,'0');
-  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//English Course//EN'];
+  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//English Course//EN','CALSCALE:GREGORIAN'];
+  const stamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
   const days = ['SU','MO','TU','WE','TH','FR','SA'];
   const add = (title, day, time, mins) => {
     const d = new Date(); d.setDate(d.getDate() + ((day - d.getDay() + 7) % 7));
     const [h, m] = time.split(':').map(Number), st = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(h)}${pad(m)}00`;
     const e = new Date(2000,0,1,h,m + mins), et = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(e.getHours())}${pad(e.getMinutes())}00`;
-    out.push('BEGIN:VEVENT', `UID:${title.replace(/\W/g,'')}${day}@englishcourse`, `DTSTART:${st}`, `DTEND:${et}`, `RRULE:FREQ=WEEKLY;BYDAY=${days[day]}`, `SUMMARY:${title}`);
+    out.push('BEGIN:VEVENT', `UID:${title.replace(/\W/g,'')}${day}@englishcourse`, `DTSTAMP:${stamp}`, `DTSTART:${st}`, `DTEND:${et}`, `RRULE:FREQ=WEEKLY;BYDAY=${days[day]}`, `SUMMARY:${title}`);
     for (const l of s.leads) out.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${title}`, `TRIGGER:-PT${l}M`, 'END:VALARM');
     out.push('END:VEVENT');
   };
@@ -207,6 +208,34 @@ EC.icsExport = function(settings){
   add('English Course: writing task (30 min)', s.write.day, s.write.time, 30);
   out.push('END:VCALENDAR');
   return out.join('\r\n');
+};
+
+// ---------- Sugestão de ajuste do plano: só sugere, quem decide é o aluno ----------
+EC.localISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+EC.scoreTrend = function(){
+  const adj = EC.get('planAdjust', {});
+  const ss = EC.get('sessions', []).filter(x => typeof x.avgScore === 'number' && (!adj.date || x.date > adj.date));
+  if (ss.length < 6) return null;                        // poucos dados: não sugere nada
+  const avg = a => a.reduce((t,x) => t + x.avgScore, 0) / a.length;
+  return { n: ss.length, recent: +avg(ss.slice(-3)).toFixed(1), prev: +avg(ss.slice(-6,-3)).toFixed(1), last: ss.slice(-6).map(x => x.avgScore) };
+};
+EC.planSuggestion = function(){
+  const adj = EC.get('planAdjust', {});
+  if (adj.lastAt && Date.now() - adj.lastAt < 14*864e5) return null;   // no máximo uma sugestão a cada 14 dias
+  const t = EC.scoreTrend(); if (!t) return null;
+  if (t.recent >= 7.5 && t.recent >= t.prev - 0.3) return { kind:'faster', ...t };
+  if (t.recent <= 5 || t.recent <= t.prev - 1.5) return { kind:'slower', ...t };
+  return null;
+};
+EC.shiftPlan = function(days){
+  const cur = EC.get('settings', {}), base = cur.planStart ? new Date(cur.planStart + 'T00:00') : new Date();
+  base.setDate(base.getDate() + days);
+  EC.set('settings', { ...cur, planStart: EC.localISO(base) });
+};
+EC.answerSuggestion = function(sg, accepted){
+  const prev = EC.get('planAdjust', {});
+  EC.set('planAdjust', { lastAt: Date.now(), date: EC.today(), accepted, kind: sg.kind, undoDays: accepted ? (sg.kind === 'faster' ? 7 : -7) : 0, log: [...(prev.log || []), { date: EC.today(), kind: sg.kind, accepted }] });
+  if (accepted) EC.shiftPlan(sg.kind === 'faster' ? -7 : 7);
 };
 
 // ---------- Avisos (funcionam com a página aberta; push real exige servidor e HTTPS) ----------
