@@ -175,7 +175,7 @@ function addTutor(text){
   const { clip, rest } = splitClip(text);
   const d = addMsg('tutor', rest);
   if (clip) {
-    const showNow = !$('voiceOut').checked;   // sem voz, o exercício vira leitura
+    const showNow = false;   // o trecho é sempre ouvido na voz da Emma; a transcrição fica escondida até você pedir
     const box = document.createElement('div'); box.className = 'clipbox';
     box.innerHTML = `<div class="cliphead"><span class="cliptitle">Listening clip</span><button type="button" class="clipplay">${ICON_PLAY} Play again</button><button type="button" class="cliptr" aria-expanded="${showNow}">${showNow ? 'Hide' : 'Show'} transcript</button></div><p class="cliptext" ${showNow ? '' : 'hidden'}></p>`;
     box.querySelector('.cliptext').textContent = clip;
@@ -235,7 +235,7 @@ async function ask(phaseKey){
     history.push({ role:'assistant', content:data.text });
     const parts = addTutor(data.text); setStatus(''); saveLesson();
     busy = false;
-    if (!paused) { if (parts.clip) await speak(parts.clip); if (parts.rest) await speak(parts.rest); }
+    if (!paused) { if (parts.clip) { const t0 = Date.now(); await EC.speak(parts.clip); tutorMs += Date.now() - t0; } if (parts.rest) await speak(parts.rest); }
   } catch(e){ setStatus(e.message, true); history.pop(); }
   busy = false;
 }
