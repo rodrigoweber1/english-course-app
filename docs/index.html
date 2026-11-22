@@ -361,7 +361,7 @@ $('end').onclick = async () => {
   const sid = 'lesson-' + EC.today() + '-' + Date.now();
   const log = EC.get('sessions', []); log.push({ id:sid, date: EC.today(), minutes: metrics.minutes, userMin: +(userMs/60000).toFixed(1), userPct: up, wpm: metrics.wpm, type: PHASES[phase].name }); EC.set('sessions', log);
   $('sumbody').innerHTML = `<p>Duration: <b>${fmt(el)}</b><br>You spoke: <b>${up}%</b> · Emma: <b>${tot ? 100-up : 0}%</b>${metrics.wpm ? `<br>Words per minute: <b>${metrics.wpm}</b>` : ''}</p><div id="phsc"></div><p class="hint" id="repst">Generating report…</p><div id="rep"></div>
-  <p>Did you enjoy today's topic? <button id="up" aria-label="Liked">👍</button> <button id="down" aria-label="Disliked">👎</button></p>`;
+  <p>Did you enjoy today's topic? <button id="up" aria-label="Liked">👍</button> <button id="down" aria-label="Disliked">👎</button></p><div id="ratemsg" role="status"></div>`;
   $('summary').style.display = 'flex';
   Promise.all(scorePending).then(() => {
     const got = phaseScores.filter(Boolean); if (!got.length) return;
@@ -369,7 +369,13 @@ $('end').onclick = async () => {
     $('phsc').innerHTML = `<h3>Phase scores</h3><p>${got.map(x => `${EC.esc(x.phase)}: <b>${x.score}/10</b>`).join(' · ')}<br>Average: <b>${avg}/10</b></p>`;
     const lg = EC.get('sessions', []), me = lg.find(x => x.id === sid); if (me) { me.scores = got.map(x => ({ phase:x.phase, score:x.score })); me.avgScore = avg; EC.set('sessions', lg); }
   });
-  const rate = v => { const t = EC.get('topicRatings', []); t.push({ date: EC.today(), v, interests: interestsText() }); EC.set('topicRatings', t); $('up').disabled = $('down').disabled = true; };
+  const rate = v => { const t = EC.get('topicRatings', []); t.push({ date: EC.today(), v, interests: interestsText() }); EC.set('topicRatings', t); $('up').disabled = $('down').disabled = true;
+    if (v < 0) {
+      $('ratemsg').innerHTML = `<div style="border:1.5px solid var(--primary);border-radius:14px;padding:12px;margin:8px 0"><p style="margin:0 0 10px">Sorry that topic did not work for you. Would you like to update your interests so the next lessons fit you better?</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="updInt">Update my interests</button><button id="notNow">Not now</button></div></div>`;
+      $('updInt').onclick = () => { location.href = 'interesses.html'; };
+      $('notNow').onclick = () => { $('ratemsg').textContent = 'No problem. You can change your interests any time in the Interests tab.'; };
+    } else $('ratemsg').textContent = 'Great, glad you enjoyed it.';
+  };
   $('up').onclick = () => rate(1); $('down').onclick = () => rate(-1);
   if (userMsgs.length < 2) { $('repst').textContent = 'Too little speech to generate a report.'; return; }
   try {
