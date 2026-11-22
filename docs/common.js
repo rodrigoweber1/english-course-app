@@ -22,7 +22,7 @@ const EC = {
   evaluate(task, payload){ return EC.api('/api/eval', { task, payload }); },
 
   nav(active){
-    const items = [['index.html','Lesson'],['prova.html','Placement test'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['interesses.html','Interests'],['ajustes.html','Settings']];
+    const items = [['prova.html','Placement test'],['index.html','Lesson'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['interesses.html','Interests'],['ajustes.html','Settings']];
     const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Main menu');
     n.innerHTML = items.map(([h,t]) => `<a href="${h}" ${h===active?'class="on" aria-current="page"':''}>${t}</a>`).join('');
     const z = document.createElement('span'); z.className = 'ecz';

@@ -69,8 +69,13 @@
   <p>A 30-minute lesson in 5 phases. You do most of the talking; Emma listens and asks short questions. Corrections come in the final report.</p>
   <p class="hint">Use Chrome or Edge and allow the microphone. You can type instead if you prefer.</p>
   <p id="intNote" class="hint"></p>
+  <div id="resumeBox" style="display:none;border:2px solid var(--primary);border-radius:12px;padding:12px;margin:12px 0">
+    <b>Lesson in progress</b>
+    <p id="resumeInfo" class="hint" style="margin:6px 0 10px"></p>
+    <button class="primary" id="resumeGo">Continue where we stopped</button>
+  </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button class="primary" id="go">Start lesson</button>
+    <button id="go">Start new lesson</button>
     <button onclick="location.href='interesses.html'" id="intBtn">My interests</button>
   </div>
 </div></div>
@@ -205,7 +210,7 @@ async function ask(phaseKey){
   try {
     const data = await EC.api('/api/chat', { messages: history, interests: interestsText(), memory: EC.memoryText(), sessionType: EC.sessionType(), phase: phaseKey || PHASES[phase].key, tutorShare: tutorShare() });
     history.push({ role:'assistant', content:data.text });
-    addMsg('tutor', data.text); setStatus('');
+    addMsg('tutor', data.text); setStatus(''); saveLesson();
     busy = false;
     if (!paused) await speak(data.text);
   } catch(e){ setStatus(e.message, true); history.pop(); }
@@ -215,7 +220,7 @@ async function ask(phaseKey){
 function send(t, phaseKey){
   t = t.trim(); if (!t || paused) return;
   addMsg('user', t); textEl.value = '';
-  history.push({ role:'user', content:t });
+  history.push({ role:'user', content:t }); saveLesson();
   ask(phaseKey);
 }
 $('send').onclick = () => send(textEl.value);
@@ -269,6 +274,7 @@ $('longBtn').onclick = () => {
 };
 
 // Nota ao fim de cada fase (a avaliação roda em segundo plano)
+const scoreHtml = x => `<b>${EC.esc(x.phase)}: ${x.score}/10</b><br>${EC.esc(x.comment)}<br><span class="hint">Tip: ${EC.esc(x.tip)}</span>`;
 function scorePhase(i, box){
   const P = PHASES[i];
   const seg = history.slice(phaseStart[i] || 0);
@@ -282,7 +288,7 @@ function scorePhase(i, box){
     .then(r => {
       const sc = Math.max(0, Math.min(10, Math.round(+r.score * 10) / 10));
       phaseScores[i] = { phase: P.name, score: sc, comment: r.comment, tip: r.tip };
-      set(`<b>${EC.esc(P.name)}: ${sc}/10</b><br>${EC.esc(r.comment)}<br><span class="hint">Tip: ${EC.esc(r.tip)}</span>`);
+      set(scoreHtml(phaseScores[i])); saveLesson();
     })
     .catch(e => { phaseScores[i] = null; set(`<b>${EC.esc(P.name)}</b> <span class="hint">· could not score: ${EC.esc(e.message)}</span>`); });
   scorePending.push(job);
@@ -304,11 +310,13 @@ $('pause').onclick = () => {
     if (!SR) { micBtn.disabled = true; $('longBtn').disabled = true; }
     if (phase === PHASES.length-1) $('next').disabled = true;
     setStatus('');
+    if (needAsk) { needAsk = false; ask(); }
   }
+  saveLesson();
 };
 
 // Fases e fim da aula
-let transition = false, transReady = false;
+let transition = false, transReady = false, needAsk = false;
 function setControls(off){
   ['mic','send','longBtn','next','text','pause'].forEach(id => $(id).disabled = off);
   if (!off) { if (!SR) { micBtn.disabled = true; $('longBtn').disabled = true; } if (phase === PHASES.length-1) $('next').disabled = true; }
@@ -321,11 +329,14 @@ function endPhase(){
   const P = PHASES[phase], N = PHASES[phase+1];
   $('next').textContent = 'Scoring…';
   setStatus(P.name + ' complete. The clock is stopped while I score it.');
-  scorePhase(phase).then(() => {
-    transReady = true; $('next').disabled = false; $('next').classList.add('primary');
-    $('next').textContent = 'Start ' + N.name + ' (' + N.min + ' min)';
-    setStatus('Read your score above. Are you ready? Click "Start ' + N.name + '" to begin the next phase.');
-  });
+  scorePhase(phase).then(showStartButton); saveLesson();
+}
+function showStartButton(){
+  const N = PHASES[phase+1];
+  transReady = true; $('next').disabled = false; $('next').classList.add('primary');
+  $('next').textContent = 'Start ' + N.name + ' (' + N.min + ' min)';
+  setStatus('Read your score above. Are you ready? Click "Start ' + N.name + '" to begin the next phase.');
+  saveLesson();
 }
 // Passo 2: o aluno clica em Start e só então a próxima fase começa
 function startNextPhase(){
@@ -333,12 +344,12 @@ function startNextPhase(){
   $('next').classList.remove('primary'); $('next').textContent = 'Next phase';
   phase++; phaseStart[phase] = history.length; renderPhases(); setControls(false); setStatus('');
   history.push({ role:'user', content:'(Let us move on to the next part of the lesson.)' });
-  ask();
+  saveLesson(); ask();
 }
 $('next').onclick = () => { if (transition) { if (transReady) startNextPhase(); } else endPhase(); };
 $('end').onclick = async () => {
   speechSynthesis.cancel(); if (listening) rec.stop();
-  clearInterval(clockTimer);
+  clearInterval(clockTimer); lessonActive = false; EC.set('lesson', null);
   if (!transition) scorePhase(phase); transition = false;
   if (paused) { pausedMs += Date.now() - pauseStart; paused = false; }
   const el = elapsed(), tot = userMs + tutorMs, up = tot ? Math.round(userMs/tot*100) : 0;
@@ -377,12 +388,60 @@ $('end').onclick = async () => {
   } catch(e){ $('repst').textContent = 'Could not generate the report: ' + e.message; }
 };
 EC.loadC1();
+// Guardar e retomar a aula (sobrevive a fechar o app, mesmo sem ter apertado Pause)
+let lessonActive = false;
+function saveLesson(){
+  if (!lessonActive) return;
+  EC.set('lesson', { history, phase, phaseStart, phaseScores, elapsed: elapsed(), userMs, tutorMs, lowConf, transition, savedAt: Date.now() });
+}
+function startTimers(){ renderPhases(); clockTimer = setInterval(() => { tick(); if (++saveN % 4 === 0) saveLesson(); }, 500); }
+let saveN = 0;
+addEventListener('pagehide', saveLesson);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveLesson(); });
+
 $('go').onclick = () => {
   $('start').style.display = 'none';
-  startedAt = Date.now(); renderPhases(); clockTimer = setInterval(tick, 500);
+  EC.set('lesson', null); lessonActive = true;
+  startedAt = Date.now(); startTimers();
   history.push({ role:'user', content:'Hello! Please start our lesson.' });
   ask();
 };
+
+function restoreLesson(L){
+  history.push(...L.history); phase = L.phase; phaseStart.length = 0; phaseStart.push(...L.phaseStart);
+  L.phaseScores.forEach((x,i) => phaseScores[i] = x === undefined ? null : x);
+  userMs = L.userMs; tutorMs = L.tutorMs; lowConf.push(...(L.lowConf || []));
+  // Reconstrói a conversa, com os cartões de nota no lugar certo
+  history.forEach((m,k) => {
+    const j = phaseStart.indexOf(k, 1);
+    if (j > 0 && phaseScores[j-1]) { const d = document.createElement('div'); d.className = 'msg score'; d.innerHTML = scoreHtml(phaseScores[j-1]); chat.append(d); }
+    if (m.content.startsWith('(') || m.content.startsWith('Hello! Please')) return;
+    addMsg(m.role === 'assistant' ? 'tutor' : 'user', m.content);
+  });
+  $('start').style.display = 'none'; lessonActive = true;
+  paused = true; pauseStart = Date.now(); pausedMs = 0; startedAt = Date.now() - L.elapsed * 1000;
+  startTimers(); tick();
+  if (history[history.length-1].role === 'user' && !history[history.length-1].content.startsWith('(')) needAsk = true;
+  if (L.transition) {
+    transition = true; setControls(true);
+    if (phaseScores[phase]) { const d = document.createElement('div'); d.className = 'msg score'; d.innerHTML = scoreHtml(phaseScores[phase]); chat.append(d); showStartButton(); }
+    else { $('next').textContent = 'Scoring…'; scorePhase(phase).then(showStartButton); }
+  } else {
+    // aula retomada em pausa: o aluno aperta Resume quando estiver pronto
+    ['mic','send','longBtn','next','text'].forEach(id => $(id).disabled = true);
+    $('pause').textContent = 'Resume'; $('pause').classList.add('primary');
+    setStatus('Lesson restored. The clock is stopped. Click Resume to continue.');
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+(function(){
+  const L = EC.get('lesson', null);
+  if (!L || !L.history || L.history.length < 2 || Date.now() - L.savedAt > 3*86400000) return;
+  const P = PHASES[L.phase];
+  $('resumeInfo').textContent = P.name + ' · ' + fmt(L.elapsed) + ' of 30:00 · saved ' + new Date(L.savedAt).toLocaleString('en-GB', { weekday:'short', hour:'2-digit', minute:'2-digit' });
+  $('resumeBox').style.display = 'block';
+  $('resumeGo').onclick = () => restoreLesson(L);
+})();
 // Interesses do questionário (guardados neste navegador)
 function loadInterests(){ try { return JSON.parse(localStorage.getItem('ec_interests') || 'null'); } catch { return null; } }
 function interestsText(){
