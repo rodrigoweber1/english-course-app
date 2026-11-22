@@ -61,10 +61,17 @@
   .card h2{margin-top:0}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 
 <div id="start"><div class="card">
+  <svg class="hero" viewBox="0 0 300 120" aria-hidden="true" style="width:100%;height:auto">
+    <rect x="12" y="14" width="150" height="64" rx="22" fill="#C2410C"/><path d="M44 78l-4 22 26-22z" fill="#C2410C"/>
+    <text x="87" y="55" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-size="26" font-weight="700" fill="#fff">Hello!</text>
+    <rect x="138" y="42" width="150" height="64" rx="22" fill="#4F46E5"/><path d="M256 106l4 12-24-12z" fill="#4F46E5"/>
+    <text x="213" y="83" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-size="26" font-weight="700" fill="#fff">Hi, Emma</text>
+  </svg>
   <h2>Lesson with Emma</h2>
   <p>A <span id="totmin">25</span>-minute lesson in 5 phases. You do most of the talking; Emma listens and asks short questions. Corrections come in the final report.</p>
   <p class="hint">Use Chrome or Edge and allow the microphone. You can type instead if you prefer.</p>
@@ -75,7 +82,7 @@
     <button class="primary" id="resumeGo">Continue where we stopped</button>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button id="go">Start new lesson</button>
+    <button class="primary" id="go">Start new lesson</button>
     <button onclick="location.href='interesses.html'" id="intBtn">My interests</button>
   </div>
 </div></div>
@@ -162,7 +169,7 @@ const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.fl
 
 // Barra de fases
 function renderPhases(){
-  $('phases').innerHTML = PHASES.map((p,i) => `<li class="${i<phase?'done':i===phase?'on':''}">${i+1}. ${p.name}<small>${p.min} min</small></li>`).join('');
+  $('phases').innerHTML = PHASES.map((p,i) => `<li class="${i<phase?'done':i===phase?'on':''}">${i+1}. ${p.name.replace("-","2011")}<small>${p.min} min</small></li>`).join('');
 }
 const elapsed = () => ((paused ? pauseStart : Date.now()) - startedAt - pausedMs)/1000;
 function phaseTargetEnd(i){ return PHASES.slice(0,i+1).reduce((a,p)=>a+p.min,0)*60; }
@@ -176,6 +183,7 @@ function tick(){
   const up = tot ? Math.round(u/tot*100) : 0;
   $('uPct').textContent = up + '%'; $('tPct').textContent = (tot ? 100-up : 0) + '%';
   $('uBar').style.width = (tot ? up : 0) + '%';
+  $('uBar').parentElement.classList.toggle('empty', !tot);
   const left = phaseTargetEnd(phase) - el, P = PHASES[phase];
   $('phaseinfo').textContent = P.name + ' (' + P.min + ' min): ' + (left >= 0 ? fmt(left) + ' left' : 'over by ' + fmt(-left)) + ' · whole lesson: ' + TOTAL_MIN + ' min';
   // Tempo da fase acabou: avança sozinho, assim que ninguém estiver falando
@@ -433,7 +441,7 @@ function restoreLesson(L){
   if (!L || !L.history || L.history.length < 2 || Date.now() - L.savedAt > 3*86400000) return;
   const P = PHASES[L.phase];
   $('resumeInfo').textContent = P.name + ' · ' + fmt(L.elapsed) + ' of ' + TOTAL_MIN + ':00 · saved ' + new Date(L.savedAt).toLocaleString('en-GB', { weekday:'short', hour:'2-digit', minute:'2-digit' });
-  $('resumeBox').style.display = 'block';
+  $('resumeBox').style.display = 'block'; $('go').classList.remove('primary');
   $('resumeGo').onclick = () => restoreLesson(L);
 })();
 // Interesses do questionário (guardados neste navegador)
@@ -443,7 +451,7 @@ function interestsText(){
   return Object.entries(d.picks || {}).filter(([,v]) => v.length).map(([k,v]) => k + ': ' + v.join(', ')).join('. ');
 }
 $('intNote').textContent = loadInterests() ? 'Your interests are saved. Emma will use them.' : 'Tip: fill in the interests questionnaire so Emma can pick topics you enjoy.';
-if (!loadInterests()) $('intBtn').classList.add('primary'), $('go').classList.remove('primary');
+if (!loadInterests() && $('resumeBox').style.display !== 'block') $('intBtn').classList.add('primary'), $('go').classList.remove('primary');
 renderPhases();
 </script>
 </body>

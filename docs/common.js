@@ -22,9 +22,20 @@ const EC = {
   evaluate(task, payload){ return EC.api('/api/eval', { task, payload }); },
 
   nav(active){
+    const I = {
+      prova: '<path d="M9 11l2 2 4-4"/><rect x="4" y="3" width="16" height="18" rx="3"/>',
+      index: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+      plano: '<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 10h18M8 2v4M16 2v4"/>',
+      biblioteca: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5z"/><path d="M4 19a2 2 0 0 1 2-2h13"/>',
+      escuta: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="7" rx="1.5"/><rect x="17" y="14" width="4" height="7" rx="1.5"/>',
+      escrita: '<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14 7l3 3"/>',
+      interesses: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+      ajustes: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+    };
     const items = [['prova.html','Placement test'],['index.html','Lesson'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['interesses.html','Interests'],['ajustes.html','Settings']];
     const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Main menu');
-    n.innerHTML = items.map(([h,t]) => `<a href="${h}" ${h===active?'class="on" aria-current="page"':''}>${t}</a>`).join('');
+    n.innerHTML = '<a class="brand" href="index.html" aria-label="English Course, home"><span class="logo" aria-hidden="true">E</span><b>English Course</b></a>' +
+      items.map(([h,t]) => `<a href="${h}" ${h===active?'class="on" aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[h.replace('.html','')]}</svg>${t}</a>`).join('');
     const z = document.createElement('span'); z.className = 'ecz';
     z.innerHTML = '<button type="button" aria-label="Smaller text" title="Smaller text">A−</button><button type="button" aria-label="Larger text" title="Larger text">A+</button>';
     const [bm, bp] = z.querySelectorAll('button');

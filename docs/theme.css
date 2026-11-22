@@ -1,0 +1,107 @@
+/* Tema visual do English Course: "indigo study room"
+   Índigo profundo para foco, verde para progresso, coral para a voz da Emma.
+   Cartões macios com sombra em camadas; títulos em Fraunces (toque britânico), texto em Lexend (feito para leitura fácil). */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Lexend:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#EEF2FF; --fg:#1E1B4B; --card:#FFFFFF; --muted:#4B5276; --border:#C7D2FE;
+  --primary:#4F46E5; --primary-deep:#3730A3; --on-primary:#FFFFFF; --tint:#E0E7FF; --tutor:#E0E7FF;
+  --accent:#C2410C; --ok:#15803D; --danger:#DC2626; --warn:#B45309;
+  --r-card:22px; --r-ctl:14px;
+  --shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 2px 4px rgba(49,46,129,.07), 0 14px 28px -12px rgba(49,46,129,.22);
+  --font-body:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-head:"Fraunces",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0E1030; --fg:#E0E7FF; --card:#181A45; --muted:#AEB6DC; --border:#2F3478;
+    --primary:#8B93F8; --primary-deep:#5B63D6; --on-primary:#0E1030; --tint:#23276A; --tutor:#23276A;
+    --accent:#FB923C; --ok:#4ADE80; --danger:#F87171; --warn:#FBBF24;
+    --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.3), 0 14px 28px -12px rgba(0,0,0,.55);
+  }
+}
+
+body{font-family:var(--font-body);background:
+  radial-gradient(900px 420px at 85% -120px, color-mix(in srgb,var(--primary) 14%,transparent), transparent 70%) no-repeat fixed,
+  var(--bg);
+  font-size:18px;line-height:1.6;color:var(--fg)}
+h1,h2,h3,.brand b{font-family:var(--font-head);font-weight:700;letter-spacing:-.01em;color:var(--fg)}
+h1{font-size:32px;line-height:1.15}
+h2{font-size:23px}
+.muted,.hint{font-size:16px}
+
+/* Cartões */
+.card{border-radius:var(--r-card);border:1px solid var(--border);box-shadow:var(--shadow);padding:20px}
+
+/* Botões: macios, com "degrau" que afunda ao clicar */
+button,.btn,a.btn{font-family:var(--font-body);font-weight:500;border-radius:var(--r-ctl);border:1.5px solid var(--border);
+  box-shadow:0 2px 0 color-mix(in srgb,var(--border) 90%,#000 10%);transition:transform .12s ease,box-shadow .12s ease,background .15s}
+button:hover:not(:disabled){background:var(--tint);transform:translateY(-1px)}
+button:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 transparent}
+button.primary,.btn.primary,a.btn.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary-deep);font-weight:600;
+  box-shadow:0 3px 0 var(--primary-deep),0 10px 18px -8px color-mix(in srgb,var(--primary) 70%,transparent)}
+button.primary:hover:not(:disabled){background:var(--primary);filter:brightness(1.06);opacity:1}
+button.primary:active:not(:disabled){box-shadow:0 0 0 var(--primary-deep)}
+button.rec{box-shadow:0 3px 0 #991B1B}
+input[type=text],input[type=number],input[type=time],input[type=date],select,textarea{font-family:var(--font-body);border-radius:var(--r-ctl);border:1.5px solid var(--border);background:var(--card)}
+input:focus,select:focus,textarea:focus{border-color:var(--primary)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--primary) 70%,transparent);outline-offset:2px}
+
+/* Menu: marca + pílulas com ícone */
+.ecnav{position:sticky;top:0;z-index:20;align-items:center;gap:4px;padding:8px 14px;background:color-mix(in srgb,var(--card) 88%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--border);box-shadow:0 6px 18px -14px rgba(49,46,129,.5)}
+.ecnav .brand{display:inline-flex;align-items:center;gap:10px;padding:0 14px 0 2px;margin-right:6px;text-decoration:none;color:var(--fg);flex:none;border-right:1px solid var(--border);min-height:40px}
+.ecnav .brand b{font-size:21px;white-space:nowrap}
+.ecnav .logo{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;color:#fff;font:700 19px var(--font-head);
+  background:linear-gradient(145deg,#6366F1,#3730A3);box-shadow:0 3px 0 #312E81}
+.ecnav a:not(.brand){border-radius:999px;padding:8px 14px;gap:8px;font-size:16px;font-weight:500;transition:background .15s,color .15s}
+.ecnav a:not(.brand):hover{background:var(--tint);color:var(--fg)}
+.ecnav a.on{background:var(--primary);color:var(--on-primary);font-weight:600;box-shadow:0 3px 0 var(--primary-deep)}
+.ecnav a svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ecz button{border-radius:12px;box-shadow:none;font-family:var(--font-body)}
+
+/* Barra de progresso */
+.pbar{height:12px;border-radius:999px;background:var(--tint);border:0;box-shadow:inset 0 1px 3px rgba(49,46,129,.2)}
+.pbar i{background:linear-gradient(90deg,#16A34A,#4ADE80);border-radius:999px}
+.pill{border-radius:999px;font-size:15px;font-weight:500}
+
+/* Opções de múltipla escolha e chips */
+.opts button{border-radius:var(--r-ctl);padding:12px 16px}
+.opts button.sel{border-color:var(--primary-deep)}
+.opts span{border-radius:999px!important}
+
+/* ---------- Tela da aula ---------- */
+header{background:color-mix(in srgb,var(--card) 92%,transparent);box-shadow:0 8px 20px -16px rgba(49,46,129,.6)}
+.phases{gap:6px!important}
+.phases li{border-radius:12px!important;border:1.5px solid var(--border)!important;background:var(--card);font-weight:500;position:relative;padding:7px 2px 6px!important}
+.phases li.done{background:color-mix(in srgb,var(--ok) 12%,var(--card));color:var(--ok);border-color:color-mix(in srgb,var(--ok) 55%,var(--border))!important}
+.phases li.done::after{content:"✓";position:absolute;top:2px;right:7px;font-size:13px;font-weight:700}
+.phases li.on{background:var(--primary)!important;border-color:var(--primary-deep)!important;color:var(--on-primary);box-shadow:0 3px 0 var(--primary-deep)}
+.track{height:10px!important;border-radius:999px!important;border:0!important;background:var(--accent)!important;box-shadow:inset 0 1px 3px rgba(0,0,0,.18)}
+.track .u{background:linear-gradient(90deg,#16A34A,#4ADE80)!important;border-radius:999px 0 0 999px}
+.track .t{background:var(--accent)!important}
+.msg{border-radius:20px!important;box-shadow:var(--shadow);border:1px solid var(--border)}
+.msg.tutor{border-bottom-left-radius:6px!important;background:var(--tutor)}
+.msg.user{border-bottom-right-radius:6px!important;background:var(--card)}
+.msg .who{font-weight:600;font-size:14px;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.msg.tutor .who::before{content:"E";width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font:700 13px var(--font-head);
+  background:linear-gradient(145deg,#FB923C,#C2410C);letter-spacing:0}
+.msg.score{border-radius:20px!important;border:1.5px solid var(--primary)!important;background:linear-gradient(180deg,var(--tint),var(--card))!important}
+.msg.score b:first-child{font-family:var(--font-head);font-size:1.25em}
+footer{background:color-mix(in srgb,var(--card) 94%,transparent)!important;box-shadow:0 -10px 24px -18px rgba(49,46,129,.6)}
+#longbox{border-radius:var(--r-ctl)!important}
+
+/* Cartão de abertura da aula */
+#start .card,#summary .card{border-radius:28px;padding:28px;max-width:480px}
+#start .hero{display:block;width:100%;max-width:300px;margin:0 auto 12px}
+#start h2{font-size:30px;margin:4px 0 8px}
+
+@media (max-width:640px){
+  .ecnav .brand b{display:none}
+  .ecnav .brand{padding-right:10px}
+  h1{font-size:28px}
+}
+.ecnav{scrollbar-width:none}.ecnav::-webkit-scrollbar{display:none}
+@media (max-width:1000px){.ecnav .brand b{display:none}.ecnav .brand{padding-right:10px}}
+header h1{display:none}
+.track.empty .t{background:var(--tint)!important}
