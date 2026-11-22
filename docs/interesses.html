@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Interests · English Course</title>
+<link rel="stylesheet" href="common.css">
 <style>
   :root{--bg:#F8FAFC;--fg:#0F172A;--card:#FFFFFF;--muted:#475569;--border:#CBD5E1;--primary:#2563EB;--on-primary:#FFFFFF;--tint:#EFF6FF}
   @media (prefers-color-scheme: dark){:root{--bg:#0B1220;--fg:#E2E8F0;--card:#111A2E;--muted:#A3B1C6;--border:#26334D;--primary:#3B82F6;--tint:#14233F}}
@@ -39,7 +40,9 @@
   <button class="primary" id="next">Continue</button>
 </div></div>
 
+<script src="common.js"></script>
 <script>
+EC.nav('interesses.html');
 const KEY = 'ec_interests';
 // Áreas gerais e perguntas concretas de cada área (seção 2.1 da especificação)
 const AREAS = {
@@ -68,7 +71,7 @@ function group(title, hint, options, name){
     options.map(o => `<label><input type="checkbox" value="${esc(o)}" ${sel.includes(o)?'checked':''}><span>${esc(o)}</span></label>`).join('') + '</div>';
 }
 function render(){
-  backB.style.visibility = step === 0 ? 'hidden' : 'visible';
+  backB.style.visibility = 'visible'; backB.textContent = step === 0 ? 'Back' : step === 2 ? 'Edit' : 'Back';
   document.getElementById('step').textContent = `Step ${step+1} of 3`;
   if (step === 0){
     app.innerHTML = `<h1>What are you into?</h1><p>Choose the areas that interest you most. Emma uses these topics for audio, debates and role-plays. You can change them whenever you like.</p>` +
@@ -106,7 +109,10 @@ nextB.onclick = () => {
   if (step === 1) save();
   step++; render();
 };
-backB.onclick = () => { if (step === 2) { backB.textContent = 'Back'; step = 1; } else step--; render(); };
+backB.onclick = () => {
+  if (step === 0) { if (history.length > 1 && document.referrer.startsWith(location.origin)) history.back(); else location.href = 'index.html'; return; }
+  if (step === 2) step = 1; else step--; render();
+};
 render();
 </script>
 </body>
