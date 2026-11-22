@@ -14,7 +14,8 @@
     :root{--bg:#0B1220; --fg:#E2E8F0; --card:#111A2E; --muted:#A3B1C6; --border:#26334D; --primary:#3B82F6; --tutor:#14233F; --accent:#FB923C; --ok:#4ADE80}
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--fg);font:19px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
+  body{margin:0;background:var(--bg);color:var(--fg);font:19px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;height:calc(100dvh / var(--z,1));display:flex;flex-direction:column;overflow:hidden}
+  header,footer{flex-shrink:0}
   header{padding:10px 16px;border-bottom:1px solid var(--border);background:var(--card)}
   .top{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   h1{font-size:22px;margin:0}
@@ -31,7 +32,7 @@
   .track{height:8px;border-radius:4px;background:var(--tutor);overflow:hidden;display:flex;margin-top:4px;border:1px solid var(--border)}
   .track .u{background:var(--primary);width:0%;transition:width .3s}
   .track .t{background:var(--accent);flex:1}
-  main{flex:1;width:100%;max-width:720px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+  main{flex:1;min-height:0;width:100%;max-width:720px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
   .msg{max-width:85%;padding:10px 14px;border-radius:14px;border:1px solid var(--border);background:var(--card)}
   .msg.tutor{align-self:flex-start;background:var(--tutor)}
   .msg.user{align-self:flex-end}

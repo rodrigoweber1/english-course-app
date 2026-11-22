@@ -35,10 +35,10 @@ const EC = {
 
   // Tamanho do texto (A− / A+): níveis de 0.85 a 1.6, guardado neste navegador
   zoom(step){
-    const lv = [.85, 1, 1.15, 1.3, 1.45, 1.6];
-    let i = EC.get('zoomIdx', 1);
+    const lv = [.85, 1, 1.15, 1.3, 1.45];
+    let i = Math.min(lv.length - 1, EC.get('zoomIdx', 1));
     if (step) { i = Math.max(0, Math.min(lv.length - 1, i + step)); EC.set('zoomIdx', i); }
-    document.documentElement.style.zoom = lv[i];
+    document.documentElement.style.zoom = lv[i]; document.documentElement.style.setProperty('--z', lv[i]);
   },
 
   // Voz britânica do sistema
