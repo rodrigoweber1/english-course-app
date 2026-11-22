@@ -178,7 +178,7 @@ function result(){
     }
     EC.set('level', { overall, avg, date: EC.today(), parts: Object.fromEntries(parts.map(([n,p]) => [n, p ? (p.cefr || label(p.score)) : null])), external: ext.value || null, listening: extL.value || null });
     const hist = EC.get('level_history', []); hist.push({ date: EC.today(), overall, avg }); EC.set('level_history', hist);
-    EC.set(DRAFT, {}); location.href = 'plano.html';
+    EC.set(DRAFT, {}); location.href = EC.get('interests', null) ? 'plano.html' : 'interesses.html';
   };
 }
 intro();

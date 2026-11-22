@@ -94,7 +94,7 @@ function render(){
     const all = [...state.areas, ...Object.keys(FIXED)];
     app.innerHTML = `<h1>All saved</h1><p>These are your interests:</p>` +
       all.map(g => `<h2>${esc(g)}</h2><p style="color:var(--fg)">${(state.picks[g]||[]).map(esc).join(' · ') || '—'}</p>`).join('');
-    backB.textContent = 'Edit'; nextB.textContent = EC.get('level', null) ? 'Go to the lesson' : 'Next: placement test'; nextB.disabled = false;
+    backB.textContent = 'Edit'; nextB.textContent = 'Go to the lesson'; nextB.disabled = false;
   }
   window.scrollTo(0,0);
 }
@@ -106,7 +106,7 @@ function save(){
   try { localStorage.setItem(KEY, JSON.stringify({ areas: state.areas, picks, updated: new Date().toISOString() })); } catch {}
 }
 nextB.onclick = () => {
-  if (step === 2) { location.href = EC.get('level', null) ? 'index.html' : 'prova.html'; return; }
+  if (step === 2) { location.href = 'index.html'; return; }
   if (step === 1) save();
   step++; render();
 };

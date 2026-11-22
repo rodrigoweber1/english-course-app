@@ -485,16 +485,16 @@ function interestsText(){
   const fb = EC.topicFeedback();
   return fb ? base + '. ' + fb : base;
 }
-// Primeiros passos do curso: 1 Interesses, 2 Prova de nível, 3 Aula
+// Primeiros passos do curso: 1 Prova de nível, 2 Interesses, 3 Aula
 (function(){
   const hasInt = !!loadInterests(), hasLvl = !!EC.get('level', null), cdue = EC.checkpointDue(), review = EC.interestsReviewDue(), resuming = $('resumeBox').style.display === 'block';
   const row = (n, done, title, sub, href) => `<li class="${done ? 'done' : ''}"><span class="num">${done ? '✓' : n}</span><span class="txt"><b>${title}</b><br><span class="hint">${sub}</span></span>${done ? '<a class="chg" href="'+href+'">Edit</a>' : '<a class="btn primary go" href="'+href+'">Start</a>'}</li>`;
   $('setup').innerHTML = '<b class="sh">Getting started</b><ol>' +
-    row(1, hasInt, 'Your interests', 'Tell Emma what you enjoy talking about (3 min).', 'interesses.html') +
-    row(2, hasLvl, 'Placement test', 'Find your starting level (about 20 min).', 'prova.html') +
+    row(1, hasLvl, 'Placement test', 'Find your starting level (about 20 min).', 'prova.html') +
+    row(2, hasInt, 'Your interests', 'Tell Emma what you enjoy talking about (3 min).', 'interesses.html') +
     (review ? `<li><span class="num">↻</span><span class="txt"><b>Review your interests</b><br><span class="hint">Last updated ${review} days ago. Still accurate?</span></span><span style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn primary go" href="interesses.html">Review</a><button type="button" id="intFine" style="min-height:40px">Still fine</button></span></li>` : '') +
     (cdue ? `<li><span class="num">★</span><span class="txt"><b>${cdue.final ? 'Final assessment' : 'Checkpoint test · week ' + cdue.week}</b><br><span class="hint">Time to measure your progress (optional now).</span></span><a class="btn primary go" href="prova.html?checkpoint=${cdue.week}">Start</a></li>` : '') +
-        '<li class="' + (hasInt ? '' : 'locked') + '"><span class="num">3</span><span class="txt"><b>Your lesson with Emma</b><br><span class="hint">' + (hasInt ? 'Ready when you are.' : 'Unlocks after step 1.') + '</span></span></li></ol>';
+        '<li class="' + (hasInt ? '' : 'locked') + '"><span class="num">3</span><span class="txt"><b>Your lesson with Emma</b><br><span class="hint">' + (hasInt ? 'Ready when you are.' : 'Unlocks after step 2.') + '</span></span></li></ol>';
   if (review) $('intFine').onclick = () => { EC.interestsStillFine(); EC.set('interestsSnooze', 0); location.reload(); };
   $('go').disabled = !hasInt && !resuming;
   if (!hasInt) $('go').title = 'Please complete the interests questionnaire first.';
