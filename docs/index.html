@@ -174,7 +174,7 @@ function tick(){
   $('phaseinfo').textContent = P.name + ' (' + P.min + ' min): ' + (left >= 0 ? fmt(left) + ' left' : 'over by ' + fmt(-left)) + ' · whole lesson: 30 min';
   // Tempo da fase acabou: avança sozinho, assim que ninguém estiver falando
   if (!paused && left <= 0) {
-    if (phase < PHASES.length-1) { if (!busy && !listening && !longMode && !speechSynthesis.speaking) $('next').click(); else setStatus('Time is up for this phase: moving on as soon as the current turn ends.'); }
+    if (phase < PHASES.length-1) { if (!busy && !listening && !longMode && !speechSynthesis.speaking) endPhase(); else setStatus('Time is up for this phase: moving on as soon as the current turn ends.'); }
     else setStatus('The 30 minutes are over. Click "End lesson" to see your report.');
   }
 }
@@ -269,14 +269,14 @@ $('longBtn').onclick = () => {
 };
 
 // Nota ao fim de cada fase (a avaliação roda em segundo plano)
-function scorePhase(i){
+function scorePhase(i, box){
   const P = PHASES[i];
   const seg = history.slice(phaseStart[i] || 0);
   const turns = seg.filter(m => m.role === 'user' && !m.content.startsWith('(') && !m.content.startsWith('Hello! Please'));
   const d = document.createElement('div'); d.className = 'msg score';
-  const set = html => { d.innerHTML = html; chat.scrollTop = chat.scrollHeight; };
+  const set = html => { d.innerHTML = html; if (box) box.innerHTML = html; chat.scrollTop = chat.scrollHeight; };
   chat.append(d);
-  if (!turns.length) { phaseScores[i] = null; set(`<b>${EC.esc(P.name)}</b> <span class="hint">· not enough speech to score this phase.</span>`); return; }
+  if (!turns.length) { phaseScores[i] = null; set(`<b>${EC.esc(P.name)}</b> <span class="hint">· not enough speech to score this phase.</span>`); return Promise.resolve(); }
   set(`<b>${EC.esc(P.name)}</b> <span class="hint">· scoring…</span>`);
   const job = EC.evaluate('phase_score', { phase: P.name, focus: FOCUS[P.key], transcript: seg.filter(m => !m.content.startsWith('(')) })
     .then(r => {
@@ -286,6 +286,7 @@ function scorePhase(i){
     })
     .catch(e => { phaseScores[i] = null; set(`<b>${EC.esc(P.name)}</b> <span class="hint">· could not score: ${EC.esc(e.message)}</span>`); });
   scorePending.push(job);
+  return job;
 }
 
 // Pausa: congela o relógio, cala a Emma e bloqueia os botões
@@ -307,19 +308,38 @@ $('pause').onclick = () => {
 };
 
 // Fases e fim da aula
-$('next').onclick = () => {
-  if (busy || listening) return;
-  if (phase >= PHASES.length-1) return;
-  scorePhase(phase);
-  phase++; phaseStart[phase] = history.length; renderPhases(); setStatus('');
+let transition = false, transReady = false;
+function setControls(off){
+  ['mic','send','longBtn','next','text','pause'].forEach(id => $(id).disabled = off);
+  if (!off) { if (!SR) { micBtn.disabled = true; $('longBtn').disabled = true; } if (phase === PHASES.length-1) $('next').disabled = true; }
+}
+// Fim de fase, passo 1: relógio parado e nota. O botão Next phase vira "Start ..."
+function endPhase(){
+  if (busy || listening || transition || phase >= PHASES.length-1) return;
+  transition = true; transReady = false; paused = true; pauseStart = Date.now();
+  speechSynthesis.cancel(); setControls(true);
+  const P = PHASES[phase], N = PHASES[phase+1];
+  $('next').textContent = 'Scoring…';
+  setStatus(P.name + ' complete. The clock is stopped while I score it.');
+  scorePhase(phase).then(() => {
+    transReady = true; $('next').disabled = false; $('next').classList.add('primary');
+    $('next').textContent = 'Start ' + N.name + ' (' + N.min + ' min)';
+    setStatus('Read your score above. Are you ready? Click "Start ' + N.name + '" to begin the next phase.');
+  });
+}
+// Passo 2: o aluno clica em Start e só então a próxima fase começa
+function startNextPhase(){
+  pausedMs += Date.now() - pauseStart; paused = false; transition = false; transReady = false;
+  $('next').classList.remove('primary'); $('next').textContent = 'Next phase';
+  phase++; phaseStart[phase] = history.length; renderPhases(); setControls(false); setStatus('');
   history.push({ role:'user', content:'(Let us move on to the next part of the lesson.)' });
   ask();
-  if (phase === PHASES.length-1) $('next').disabled = true;
-};
+}
+$('next').onclick = () => { if (transition) { if (transReady) startNextPhase(); } else endPhase(); };
 $('end').onclick = async () => {
   speechSynthesis.cancel(); if (listening) rec.stop();
   clearInterval(clockTimer);
-  scorePhase(phase);
+  if (!transition) scorePhase(phase); transition = false;
   if (paused) { pausedMs += Date.now() - pauseStart; paused = false; }
   const el = elapsed(), tot = userMs + tutorMs, up = tot ? Math.round(userMs/tot*100) : 0;
   const userMsgs = history.filter(m => m.role === 'user' && !m.content.startsWith('(') && !m.content.startsWith('Hello! Please'));
