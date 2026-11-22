@@ -21,6 +21,7 @@
   .clock{font-variant-numeric:tabular-nums;font-weight:600}
   .phases{max-width:720px;margin:8px auto 0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;list-style:none;padding:0}
   .phases li{font-size:15px;text-align:center;padding:6px 1px;overflow:hidden;border-radius:8px;border:1px solid var(--border);color:var(--muted)}
+  .phases li small{display:block;font-size:13px;opacity:.85}
   @media (max-width:420px){.phases li{font-size:12px}}
   .phases li.done{color:var(--ok);border-color:var(--ok)}
   .phases li.on{background:var(--primary);border-color:var(--primary);color:var(--on-primary);font-weight:600}
@@ -85,6 +86,7 @@
     <label class="hint"><input type="checkbox" id="voiceOut" checked> Emma's voice</label>
   </div>
   <ol class="phases" id="phases"></ol>
+  <div class="hint" id="phaseinfo" style="max-width:720px;margin:6px auto 0"></div>
   <div class="meter">
     <div>Talk time: you <b id="uPct">0%</b> · Emma <b id="tPct">0%</b> (target: 80/20)</div>
     <div class="track"><div class="u" id="uBar"></div><div class="t"></div></div>
@@ -103,6 +105,7 @@
   </div>
   <div class="row2">
     <button id="longBtn">Long turn (1:30)</button>
+    <button id="pause">Pause</button>
     <button id="next">Next phase</button>
     <button id="end">End lesson</button>
   </div>
@@ -127,6 +130,7 @@ const chat = $('chat'), statusEl = $('status'), micBtn = $('mic'), textEl = $('t
 const history = [];
 let phase = 0, busy = false, listening = false, rec = null, britishVoice = null;
 let startedAt = 0, userMs = 0, tutorMs = 0, micStart = 0, clockTimer = null;
+let paused = false, pauseStart = 0, pausedMs = 0;
 let longMode = false, longTimer = null; const lowConf = [];
 
 function setStatus(t, err){ statusEl.textContent = t || ''; statusEl.className = 'status' + (err ? ' err' : ''); }
@@ -141,20 +145,23 @@ const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.fl
 
 // Barra de fases
 function renderPhases(){
-  $('phases').innerHTML = PHASES.map((p,i) => `<li class="${i<phase?'done':i===phase?'on':''}">${i+1}. ${p.name}</li>`).join('');
+  $('phases').innerHTML = PHASES.map((p,i) => `<li class="${i<phase?'done':i===phase?'on':''}">${i+1}. ${p.name}<small>${p.min} min</small></li>`).join('');
 }
+const elapsed = () => ((paused ? pauseStart : Date.now()) - startedAt - pausedMs)/1000;
 function phaseTargetEnd(i){ return PHASES.slice(0,i+1).reduce((a,p)=>a+p.min,0)*60; }
 
 // Relógio e medidor 80/20
 function tick(){
-  const el = (Date.now() - startedAt)/1000;
+  const el = elapsed();
   $('clock').textContent = fmt(el);
   const live = listening ? Date.now() - micStart : 0;
   const u = userMs + live, tot = u + tutorMs;
   const up = tot ? Math.round(u/tot*100) : 0;
   $('uPct').textContent = up + '%'; $('tPct').textContent = (tot ? 100-up : 0) + '%';
   $('uBar').style.width = (tot ? up : 0) + '%';
-  if (phase < PHASES.length-1 && el > phaseTargetEnd(phase) + 30) setStatus('This phase has run over time. Click "Next phase" whenever you like.');
+  const left = phaseTargetEnd(phase) - el, P = PHASES[phase];
+  $('phaseinfo').textContent = P.name + ' (' + P.min + ' min): ' + (left >= 0 ? fmt(left) + ' left' : 'over by ' + fmt(-left)) + ' · whole lesson: 30 min';
+  if (!paused && phase < PHASES.length-1 && el > phaseTargetEnd(phase) + 30) setStatus('This phase has run over time. Click "Next phase" whenever you like.');
 }
 function tutorShare(){ const t = userMs + tutorMs; return t > 20000 ? tutorMs/t : 0; }
 
@@ -185,13 +192,13 @@ async function ask(phaseKey){
     history.push({ role:'assistant', content:data.text });
     addMsg('tutor', data.text); setStatus('');
     busy = false;
-    await speak(data.text);
+    if (!paused) await speak(data.text);
   } catch(e){ setStatus(e.message, true); history.pop(); }
   busy = false;
 }
 
 function send(t, phaseKey){
-  t = t.trim(); if (!t) return;
+  t = t.trim(); if (!t || paused) return;
   addMsg('user', t); textEl.value = '';
   history.push({ role:'user', content:t });
   ask(phaseKey);
@@ -220,7 +227,7 @@ else {
     if (interimEl) interimEl.remove(); interimEl = null;
     const t = finalText.trim(); finalText = '';
     const wasLong = longMode; endLongUI();
-    if (t) send(t, wasLong ? 'longturn' : undefined); else setStatus('');
+    if (t && paused) textEl.value = t; else if (t) send(t, wasLong ? 'longturn' : undefined); else if (!paused) setStatus('');
   };
   rec.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') setStatus('Microfone: ' + e.error, true); };
   micBtn.onclick = () => {
@@ -246,6 +253,24 @@ $('longBtn').onclick = () => {
   startListening(); setStatus('Long turn: Emma will not interrupt.');
 };
 
+// Pausa: congela o relógio, cala a Emma e bloqueia os botões
+$('pause').onclick = () => {
+  const ctl = ['mic','send','longBtn','next','text'].map($);
+  if (!paused) {
+    paused = true; pauseStart = Date.now();
+    speechSynthesis.cancel(); if (listening) rec.stop();
+    $('pause').textContent = 'Resume'; $('pause').classList.add('primary');
+    ctl.forEach(b => b.disabled = true); setStatus('Paused. The clock is stopped. Click Resume to continue.');
+  } else {
+    pausedMs += Date.now() - pauseStart; paused = false;
+    $('pause').textContent = 'Pause'; $('pause').classList.remove('primary');
+    ctl.forEach(b => b.disabled = false);
+    if (!SR) { micBtn.disabled = true; $('longBtn').disabled = true; }
+    if (phase === PHASES.length-1) $('next').disabled = true;
+    setStatus('');
+  }
+};
+
 // Fases e fim da aula
 $('next').onclick = () => {
   if (busy || listening) return;
@@ -258,7 +283,8 @@ $('next').onclick = () => {
 $('end').onclick = async () => {
   speechSynthesis.cancel(); if (listening) rec.stop();
   clearInterval(clockTimer);
-  const el = (Date.now() - startedAt)/1000, tot = userMs + tutorMs, up = tot ? Math.round(userMs/tot*100) : 0;
+  if (paused) { pausedMs += Date.now() - pauseStart; paused = false; }
+  const el = elapsed(), tot = userMs + tutorMs, up = tot ? Math.round(userMs/tot*100) : 0;
   const userMsgs = history.filter(m => m.role === 'user' && !m.content.startsWith('(') && !m.content.startsWith('Hello! Please'));
   const words = userMsgs.reduce((a,m) => a + m.content.split(/\s+/).length, 0);
   const metrics = { minutes: +(el/60).toFixed(1), userPct: up, tutorPct: tot ? 100-up : 0, userWords: words, wpm: userMs > 5000 ? Math.round(words / (userMs/60000)) : null, avgTurnWords: userMsgs.length ? Math.round(words/userMsgs.length) : 0, turns: userMsgs.length };
