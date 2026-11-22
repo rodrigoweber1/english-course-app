@@ -66,7 +66,7 @@
 
 <div id="start"><div class="card">
   <h2>Lesson with Emma</h2>
-  <p>A 30-minute lesson in 5 phases. You do most of the talking; Emma listens and asks short questions. Corrections come in the final report.</p>
+  <p>A <span id="totmin">25</span>-minute lesson in 5 phases. You do most of the talking; Emma listens and asks short questions. Corrections come in the final report.</p>
   <p class="hint">Use Chrome or Edge and allow the microphone. You can type instead if you prefer.</p>
   <p id="intNote" class="hint"></p>
   <div id="resumeBox" style="display:none;border:2px solid var(--primary);border-radius:12px;padding:12px;margin:12px 0">
@@ -90,7 +90,7 @@
 <header>
   <div class="top">
     <h1>English Course</h1>
-    <div><span class="clock" id="clock">00:00</span> / 30:00</div>
+    <div><span class="clock" id="clock">00:00</span> / <span id="totclock">25:00</span></div>
     <label class="hint"><input type="checkbox" id="voiceOut" checked> Emma's voice</label>
   </div>
   <ol class="phases" id="phases"></ol>
@@ -124,12 +124,13 @@
 EC.nav('index.html');
 const PHASES = [
   { key:'warmup',  name:'Warm-up',  min:3 },
-  { key:'input',   name:'Input',        min:6 },
-  { key:'guided',  name:'Talk',     min:16 },
+  { key:'input',   name:'Input',        min:5 },
+  { key:'guided',  name:'Talk',     min:12 },
   { key:'grammar', name:'Grammar',    min:4 },
   { key:'closing', name:'Closing',   min:1 },
 ];
 const LONG_SECONDS = 90;
+const TOTAL_MIN = PHASES.reduce((a,p) => a + p.min, 0); // 25
 const FOCUS = {
   warmup: 'ease and naturalness in small talk, fluency, willingness to speak at length, range of everyday language',
   input: 'comprehension of the snippet, quality of the summary or reaction, ability to pick out detail and give an opinion',
@@ -176,11 +177,11 @@ function tick(){
   $('uPct').textContent = up + '%'; $('tPct').textContent = (tot ? 100-up : 0) + '%';
   $('uBar').style.width = (tot ? up : 0) + '%';
   const left = phaseTargetEnd(phase) - el, P = PHASES[phase];
-  $('phaseinfo').textContent = P.name + ' (' + P.min + ' min): ' + (left >= 0 ? fmt(left) + ' left' : 'over by ' + fmt(-left)) + ' · whole lesson: 30 min';
+  $('phaseinfo').textContent = P.name + ' (' + P.min + ' min): ' + (left >= 0 ? fmt(left) + ' left' : 'over by ' + fmt(-left)) + ' · whole lesson: ' + TOTAL_MIN + ' min';
   // Tempo da fase acabou: avança sozinho, assim que ninguém estiver falando
   if (!paused && left <= 0) {
     if (phase < PHASES.length-1) { if (!busy && !listening && !longMode && !speechSynthesis.speaking) endPhase(); else setStatus('Time is up for this phase: moving on as soon as the current turn ends.'); }
-    else setStatus('The 30 minutes are over. Click "End lesson" to see your report.');
+    else setStatus('The ' + TOTAL_MIN + ' minutes are over. Click "End lesson" to see your report.');
   }
 }
 function tutorShare(){ const t = userMs + tutorMs; return t > 20000 ? tutorMs/t : 0; }
@@ -431,7 +432,7 @@ function restoreLesson(L){
   const L = EC.get('lesson', null);
   if (!L || !L.history || L.history.length < 2 || Date.now() - L.savedAt > 3*86400000) return;
   const P = PHASES[L.phase];
-  $('resumeInfo').textContent = P.name + ' · ' + fmt(L.elapsed) + ' of 30:00 · saved ' + new Date(L.savedAt).toLocaleString('en-GB', { weekday:'short', hour:'2-digit', minute:'2-digit' });
+  $('resumeInfo').textContent = P.name + ' · ' + fmt(L.elapsed) + ' of ' + TOTAL_MIN + ':00 · saved ' + new Date(L.savedAt).toLocaleString('en-GB', { weekday:'short', hour:'2-digit', minute:'2-digit' });
   $('resumeBox').style.display = 'block';
   $('resumeGo').onclick = () => restoreLesson(L);
 })();

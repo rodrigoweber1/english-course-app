@@ -7,7 +7,7 @@ App web pessoal para praticar inglês oral (nível B2 alto → C1). Veja a espec
 2. Dê dois cliques em `iniciar.bat` (ou rode `node servidor.js`) e abra http://localhost:3000 no Chrome ou Edge.
 
 ## Páginas
-Aula (30 min, 5 fases) · Prova de nível · Plano · Biblioteca (cartões, vocabulário, erros) · Escuta (RSS) · Escrita · Interesses · Ajustes.
+Aula (25 min, 5 fases) · Prova de nível · Plano · Biblioteca (cartões, vocabulário, erros) · Escuta (RSS) · Escrita · Interesses · Ajustes.
 
 Os dados de progresso ficam no navegador (localStorage); o servidor só guarda a chave e o consumo da API (`usage.json`).
 

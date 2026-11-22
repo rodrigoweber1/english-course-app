@@ -191,7 +191,7 @@ EC.icsExport = function(settings){
     for (const l of s.leads) out.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${title}`, `TRIGGER:-PT${l}M`, 'END:VALARM');
     out.push('END:VEVENT');
   };
-  Object.entries(s.classes).forEach(([d,t]) => add('English Course: lesson (30 min)', +d, t, 30));
+  Object.entries(s.classes).forEach(([d,t]) => add('English Course: lesson (25 min)', +d, t, 25));
   (s.listen.days || []).forEach(d => add('English Course: free listening (20 min)', d, s.listen.time, 20));
   add('English Course: writing task (30 min)', s.write.day, s.write.time, 30);
   out.push('END:VCALENDAR');
@@ -210,7 +210,7 @@ EC.checkReminders = function(){
   const mins = (hhmm) => { const [h,m] = hhmm.split(':').map(Number); return h*60+m; };
   const nowM = now.getHours()*60 + now.getMinutes();
   const t = s.classes[now.getDay()];
-  if (t) for (const l of s.leads) if (nowM === mins(t) - l) fire(today+'a'+l, 'English Course', `In ${l} min: ${type}, 30 minutes.`);
+  if (t) for (const l of s.leads) if (nowM === mins(t) - l) fire(today+'a'+l, 'English Course', `In ${l} min: ${type}, 25 minutes.`);
   if (t && s.second.on && nowM === mins(t) + s.second.hours*60 && !EC.get('sessions', []).some(x => x.date === today)) fire(today+'b', 'English Course', "You haven't started today's lesson yet. Shall we do it now?");
   if ((s.listen.days || []).includes(now.getDay()) && nowM === mins(s.listen.time)) fire(today+'l', 'English Course', 'Today is a free-listening day (20 min).');
   if (s.write.day === now.getDay() && nowM === mins(s.write.time)) fire(today+'w', 'English Course', "Time for this week's writing task.");
