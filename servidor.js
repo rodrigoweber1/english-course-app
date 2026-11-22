@@ -62,7 +62,7 @@ async function claude({ model, system, messages, max_tokens }) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model, max_tokens, system, messages, thinking: { type: 'disabled' } }),
+    body: JSON.stringify({ model, max_tokens, system, messages, thinking: { type: /haiku/.test(model) ? 'disabled' : 'between_tools' } }),
   });
   const data = await r.json();
   if (!r.ok) throw new Error(data.error?.message || 'API error');
