@@ -153,14 +153,17 @@ function reading(){
 // 3. Escrita (IA)
 function writing(){
   app.innerHTML = `<h1>Writing</h1><div class="card">${EC.esc(WPROMPT)}</div><textarea id="t" aria-label="Your text"></textarea><p class="hint" id="wc">0 words</p><div class="row"><button class="primary" id="go">Submit for marking</button><button onclick="intro()">Back</button></div><div id="out"></div>`;
-  t.oninput = () => wc.textContent = (t.value.trim() ? t.value.trim().split(/\s+/).length : 0) + ' words';
-  startTimer(5, () => { if (!go.disabled) { if (t.value.trim()) go.click(); else intro(); } });
+  const WD = 'writing_text_' + DRAFT;   // o texto é guardado a cada tecla: nunca se perde ao sair, recarregar ou acabar o tempo
+  const count = () => wc.textContent = (t.value.trim() ? t.value.trim().split(/\s+/).length : 0) + ' words';
+  t.value = EC.get(WD, ''); count();
+  t.oninput = () => { count(); EC.set(WD, t.value); };
+  startTimer(5, () => { if (!go.disabled) { if (t.value.trim()) { out.innerHTML = '<p class="muted">Time is up. Sending what you wrote…</p>'; go.click(); } else intro(); } });
   go.onclick = async () => {
     stopTimer();
     out.innerHTML = '<p class="muted">Marking…</p>'; go.disabled = true;
     try {
       const r = await EC.evaluate('placement_writing', { prompt: WPROMPT, text: t.value });
-      res.writing = { score: Math.max(0, LV.indexOf(r.cefr)), cefr: r.cefr, data: r }; EC.set(DRAFT, res);
+      res.writing = { score: Math.max(0, LV.indexOf(r.cefr)), cefr: r.cefr, data: r, text: t.value }; EC.set(DRAFT, res); EC.set(WD, '');
       EC.addErrors(r.errors, 'prova-' + EC.today());
       out.innerHTML = `<div class="card"><b>Writing level: ${EC.esc(r.cefr)}</b><p>Strengths: ${(r.strengths||[]).map(EC.esc).join('; ')}</p><p>To improve: ${(r.weaknesses||[]).map(EC.esc).join('; ')}</p>${(r.errors||[]).map(e=>`<p>${EC.diffHtml(e.original,e.correction)}<br><span class="muted">${EC.esc(e.explanation)}</span></p>`).join('')}</div><button class="primary" onclick="intro()">Continue</button>`;
     } catch(e){ out.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; }
