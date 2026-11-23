@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* carrega os arquivos do app com o número da versão no endereço: o navegador nunca mistura arquivo velho com versão nova */(function(){var v='';try{v=new URLSearchParams(location.search).get('v')||localStorage.getItem('ecasset')||''}catch(e){}window.__L=function(f){var q=v?'?v='+encodeURIComponent(v):'';document.write(/\.css$/.test(f)?'<link rel="stylesheet" href="'+f+q+'">':'<script src="'+f+q+'"><\/script>')}})()</script>
 <title>Ask Emma</title>
-<link rel="stylesheet" href="common.css">
+<script>__L('common.css')</script>
 <style>
   :root{
     --bg:#F8FAFC; --fg:#0F172A; --card:#FFFFFF; --muted:#475569; --border:#CBD5E1;
@@ -61,7 +62,7 @@
   .card h2{margin-top:0}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-<link rel="stylesheet" href="theme.css">
+<script>__L('theme.css')</script>
 </head>
 <body>
 
@@ -127,8 +128,8 @@
   </div>
 </footer>
 
-<script src="config.js"></script>
-<script src="common.js"></script>
+<script>__L('config.js')</script>
+<script>__L('common.js')</script>
 <script>
 EC.nav('index.html');
 const PHASES = [

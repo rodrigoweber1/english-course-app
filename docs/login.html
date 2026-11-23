@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* carrega os arquivos do app com o número da versão no endereço: o navegador nunca mistura arquivo velho com versão nova */(function(){var v='';try{v=new URLSearchParams(location.search).get('v')||localStorage.getItem('ecasset')||''}catch(e){}window.__L=function(f){var q=v?'?v='+encodeURIComponent(v):'';document.write(/\.css$/.test(f)?'<link rel="stylesheet" href="'+f+q+'">':'<script src="'+f+q+'"><\/script>')}})()</script>
 <title>Sign in · Ask Emma</title>
-<link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="theme.css">
+<script>__L('common.css')</script>
+<script>__L('theme.css')</script>
 </head>
 <body>
 <main class="login">
@@ -65,8 +66,8 @@
   </section>
 </main>
 
-<script src="config.js"></script>
-<script src="common.js"></script>
+<script>__L('config.js')</script>
+<script>__L('common.js')</script>
 <script>
 const $ = id => document.getElementById(id);
 const nextPage = (() => { const n = new URLSearchParams(location.search).get('next') || ''; return /^[\w.-]+\.html$/i.test(n) ? n : 'index.html'; })();

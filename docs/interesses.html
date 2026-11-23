@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* carrega os arquivos do app com o número da versão no endereço: o navegador nunca mistura arquivo velho com versão nova */(function(){var v='';try{v=new URLSearchParams(location.search).get('v')||localStorage.getItem('ecasset')||''}catch(e){}window.__L=function(f){var q=v?'?v='+encodeURIComponent(v):'';document.write(/\.css$/.test(f)?'<link rel="stylesheet" href="'+f+q+'">':'<script src="'+f+q+'"><\/script>')}})()</script>
 <title>Interests · Ask Emma</title>
-<link rel="stylesheet" href="common.css">
+<script>__L('common.css')</script>
 <style>
   :root{--bg:#F8FAFC;--fg:#0F172A;--card:#FFFFFF;--muted:#475569;--border:#CBD5E1;--primary:#2563EB;--on-primary:#FFFFFF;--tint:#EFF6FF}
   @media (prefers-color-scheme: dark){:root{--bg:#0B1220;--fg:#E2E8F0;--card:#111A2E;--muted:#A3B1C6;--border:#26334D;--primary:#3B82F6;--tint:#14233F}}
@@ -29,7 +30,7 @@
   .step{font-size:16px;color:var(--muted)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-<link rel="stylesheet" href="theme.css">
+<script>__L('theme.css')</script>
 </head>
 <body>
 <script>try{document.documentElement.style.zoom=[.85,1,1.15,1.3,1.45][Math.min(4,JSON.parse(localStorage.getItem("ec_zoomIdx")||"1"))]}catch(e){}</script>
@@ -40,8 +41,8 @@
   <button class="primary" id="next">Continue</button>
 </div></div>
 
-<script src="config.js"></script>
-<script src="common.js"></script>
+<script>__L('config.js')</script>
+<script>__L('common.js')</script>
 <script>
 EC.nav('interesses.html');
 const KEY = 'ec_interests';
