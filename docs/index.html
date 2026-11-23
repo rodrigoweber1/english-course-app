@@ -494,7 +494,7 @@ function interestsText(){
   let curTaken = false;
   const row = (n, done, title, sub, href) => { const cur = !done && !curTaken; if (cur) curTaken = true; return `<li class="${done ? 'done' : cur ? 'cur' : ''}"><span class="num">${done ? '✓' : n}</span><span class="txt"><b>${title}</b><br><span class="hint">${sub}</span></span>${done ? '<a class="chg" href="'+href+'">Edit</a>' : '<a class="btn primary go" href="'+href+'">Start</a>'}</li>`; };
   $('setup').innerHTML = '<b class="sh">Getting started</b><ol>' +
-    row(1, hasLvl, 'Placement test', 'Find your starting level (up to 25 min).', 'prova.html') +
+    row(1, hasLvl, 'Placement test', 'Find your starting level (up to 27 min).', 'prova.html') +
     row(2, hasInt, 'Your interests', 'Tell Enma what you enjoy talking about (3 min).', 'interesses.html') +
     (review ? `<li><span class="num">↻</span><span class="txt"><b>Review your interests</b><br><span class="hint">Last updated ${review} days ago. Still accurate?</span></span><span style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn primary go" href="interesses.html">Review</a><button type="button" id="intFine" style="min-height:40px">Still fine</button></span></li>` : '') +
     (cdue ? `<li><span class="num">★</span><span class="txt"><b>${cdue.final ? 'Final assessment' : 'Checkpoint test · week ' + cdue.week}</b><br><span class="hint">Time to measure your progress (optional now).</span></span><a class="btn primary go" href="prova.html?checkpoint=${cdue.week}">Start</a></li>` : '') +
