@@ -130,7 +130,8 @@ credit.onchange = () => { s.credit = Math.max(1, +credit.value || 5); EC.set('se
   const note = () => {
     if (!EC.authOn) { cloudNote.textContent = 'Sign-in is not connected, so there is no cloud backup.'; cloudNow.disabled = cloudBack.disabled = true; return; }
     const st = EC.get('cloudStamp', null), er = EC.get('cloudErr', null);
-    cloudNote.textContent = 'Your progress is saved to your account automatically while you study, with no action needed. ' + (st ? 'Last saved: ' + new Date(st).toLocaleString('en-GB') + '.' : 'Not saved yet.') + (er ? ' Last problem: ' + er + '.' : '');
+    const state = st ? 'Last saved: ' + new Date(st).toLocaleString('en-GB') + '.' : (EC.hasProgress() ? 'The first save will happen within a minute. You can also press Save now.' : 'There is nothing to save yet. It starts by itself after your first activity (interests, placement test or lesson).');
+    cloudNote.textContent = 'Your progress is saved to your account automatically while you study, with no action needed. ' + state + (er ? ' Last problem: ' + er + '. If this keeps happening, the cloud database setup may be missing.' : '');
   };
   note();
   cloudNow.onclick = async () => { cloudMsg.textContent = 'Saving…'; const r = await EC.cloudPush(); cloudMsg.textContent = ({ saved:'Saved to the cloud.', same:'Already up to date.', empty:'There is no progress to save yet.', conflict:'The cloud has newer changes: choose an option in the box at the top.', otheruser:'This device holds data from another account.', error:'Could not save. Check your connection, and that the database setup was run.', skip:'Please wait a moment and try again.' })[r] || ''; note(); };
