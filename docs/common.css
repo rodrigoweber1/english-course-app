@@ -13,7 +13,7 @@ p{margin:4px 0 12px}
 .muted,.hint{color:var(--muted);font-size:17px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
 button,.btn{min-height:48px;padding:0 16px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center;text-decoration:none;transition:background .15s,opacity .15s}
-button:hover:not(:disabled){background:var(--tint)}
+@media (hover:hover) and (pointer:fine){button:hover:not(:disabled){background:var(--tint)}}
 button.primary,.btn.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary);font-weight:600}
 button.primary:hover:not(:disabled){background:var(--primary);opacity:.9}
 button.danger{color:var(--danger)}
