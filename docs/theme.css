@@ -154,3 +154,22 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--primary)}
 #ecsync{top:76px}
 #ecupd,#ecsync{position:fixed;left:12px;right:12px;margin:0 auto;width:auto;max-width:640px;top:12px;z-index:100;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;text-align:center;padding:12px 16px;border-radius:16px;background:var(--card);color:var(--fg);border:2px solid var(--primary);box-shadow:0 10px 30px rgba(49,46,129,.28);font-size:16px}
 #ecupd button,#ecsync button{min-height:40px;padding:0 16px}
+
+/* Menu suspenso (logo E à esquerda, menu à direita) */
+.ecnav{display:flex;overflow:visible!important;white-space:normal}
+.ecnav .brand{border-right:0;margin-right:auto}
+.ecnav .ecz{margin-left:0;padding-left:0;margin-right:8px}
+.ecmenubtn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;font-size:16px;font-weight:600;flex:none}
+.ecmenubtn svg,.ecmenu a svg{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ecmenu{position:absolute;right:14px;top:calc(100% + 6px);width:min(320px,calc(100vw - 28px));max-height:calc(100dvh - 90px);overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:8px;box-shadow:0 18px 40px -12px rgba(49,46,129,.45);z-index:30}
+.ecmenu[hidden]{display:none}
+.ecmenu .ecgrp{padding:4px 0;border-top:1px solid var(--border)}
+.ecmenu .ecgrp:first-child{border-top:0}
+.ecgh{display:block;padding:6px 12px 2px;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ecmenu a{display:flex;align-items:center;gap:12px;min-height:46px;padding:0 12px;border-radius:12px;text-decoration:none;color:var(--fg);font-size:17px;font-weight:500}
+.ecmenu a:hover{background:var(--tint)}
+.ecmenu a.on{background:var(--primary);color:var(--on-primary);font-weight:600}
+.ecmail{display:block;padding:6px 12px;font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ecmenu .ecout{display:block;width:calc(100% - 8px);margin:4px;min-height:44px;font-size:16px}
+.ecmenu a:focus-visible,.ecmenubtn:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+@media (max-width:640px){.ecmenubtn span{display:none}.ecmenubtn{padding:0 12px}.ecmenu{right:8px}}

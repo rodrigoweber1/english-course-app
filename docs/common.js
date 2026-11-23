@@ -41,18 +41,40 @@ const EC = {
       girias: '<path d="M12 3l2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/>',
       ajustes: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
     };
-    const items = [['prova.html','Placement test'],['interesses.html','Interests'],['index.html','Lesson'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['girias.html','Slang'],['ajustes.html','Settings']];
+    // Menu em lista suspensa: a logo "E" fica na barra; as páginas ficam dentro do menu
+    const groups = [
+      ['Start', [['prova.html','Placement test'],['interesses.html','Interests']]],
+      ['Practice', [['index.html','Lesson'],['girias.html','Slang'],['escuta.html','Listening'],['escrita.html','Writing']]],
+      ['Progress', [['plano.html','Plan'],['biblioteca.html','Library']]],
+      ['Account', [['ajustes.html','Settings']]],
+    ];
+    const email = EC.authOn && EC.session() ? (EC.session().user?.email || '') : '';
+    const link = ([h,t]) => `<a href="${h}" role="menuitem" ${h===active?'class="on" aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[h.replace('.html','')]}</svg>${t}</a>`;
     const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Main menu');
     n.innerHTML = '<a class="brand" href="index.html" aria-label="Ask Emma, home"><span class="logo" aria-hidden="true">E</span><b>Ask Emma</b></a>' +
-      items.map(([h,t]) => `<a href="${h}" ${h===active?'class="on" aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[h.replace('.html','')]}</svg>${t}</a>`).join('');
-    const z = document.createElement('span'); z.className = 'ecz';
-    z.innerHTML = '<button type="button" aria-label="Smaller text" title="Smaller text">A−</button><button type="button" aria-label="Larger text" title="Larger text">A+</button>';
-    const [bm, bp] = z.querySelectorAll('button');
+      '<span class="ecz"><button type="button" aria-label="Smaller text" title="Smaller text">A−</button><button type="button" aria-label="Larger text" title="Larger text">A+</button></span>' +
+      '<button type="button" class="ecmenubtn" id="ecMenuBtn" aria-label="Menu" aria-haspopup="true" aria-expanded="false" aria-controls="ecMenu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span></button>' +
+      '<div class="ecmenu" id="ecMenu" role="menu" aria-label="Pages" hidden>' +
+        groups.map(([g, its]) => `<div class="ecgrp" role="none"><span class="ecgh" aria-hidden="true">${g}</span>${its.map(link).join('')}</div>`).join('') +
+        (email ? `<div class="ecgrp" role="none"><span class="ecmail" title="${EC.esc(email)}">${EC.esc(email)}</span><button type="button" class="ecout" role="menuitem">Sign out</button></div>` : '') +
+      '</div>';
+    const [bm, bp] = n.querySelectorAll('.ecz button');
     bm.onclick = () => EC.zoom(-1); bp.onclick = () => EC.zoom(1);
-    n.appendChild(z);
-    if (EC.authOn && EC.session()) {
-      const o = document.createElement('button'); o.type = 'button'; o.className = 'ecout'; o.textContent = 'Sign out'; o.title = 'Signed in as ' + (EC.session().user?.email || ''); o.onclick = () => EC.signOut(); n.appendChild(o);
-    }
+    const btn = n.querySelector('#ecMenuBtn'), menu = n.querySelector('#ecMenu');
+    const setOpen = (on, focus) => {
+      menu.hidden = !on; btn.setAttribute('aria-expanded', on); btn.querySelector('path').setAttribute('d', on ? 'M6 6l12 12M18 6L6 18' : 'M4 7h16M4 12h16M4 17h16');
+      if (on && focus) (menu.querySelector('a.on') || menu.querySelector('a, button')).focus();
+    };
+    btn.onclick = () => setOpen(menu.hidden, true);
+    document.addEventListener('click', e => { if (!menu.hidden && !n.contains(e.target)) setOpen(false); });
+    n.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !menu.hidden) { setOpen(false); btn.focus(); return; }
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !menu.hidden) {
+        const items = [...menu.querySelectorAll('a, button')], k = items.indexOf(document.activeElement);
+        items[(k + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); e.preventDefault();
+      }
+    });
+    const out = n.querySelector('.ecout'); if (out) out.onclick = () => EC.signOut();
     document.body.prepend(n);
   },
 
@@ -432,7 +454,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.4.0';
+EC.VERSION = '1.5.0';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
