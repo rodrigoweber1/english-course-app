@@ -14,8 +14,8 @@
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#0E1030; --fg:#E0E7FF; --card:#181A45; --muted:#AEB6DC; --border:#2F3478;
-    --primary:#8B93F8; --primary-deep:#5B63D6; --on-primary:#0E1030; --tint:#23276A; --tutor:#23276A;
+    --bg:#0B0D2B; --fg:#E8EDFF; --card:#1D2052; --muted:#C9D0F2; --border:#4A51A8;
+    --primary:#8B93F8; --primary-deep:#5B63D6; --on-primary:#0E1030; --tint:#262A6E; --tutor:#262A6E;
     --accent:#FB923C; --ok:#4ADE80; --danger:#F87171; --warn:#FBBF24; --on-ok:#052E16; --on-danger:#2A0A0A;
     --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.3), 0 14px 28px -12px rgba(0,0,0,.55);
   }
@@ -227,3 +227,13 @@ body:not(:has(#chat)) .ecfoot{margin-top:auto}
 
 .donepill{background:color-mix(in srgb,var(--ok) 22%,var(--card));color:var(--fg);border:1px solid var(--ok);font-weight:600}
 button.donebtn{border-color:var(--ok)}
+
+/* Modo escuro automático (tema do aparelho): cartões e bordas mais visíveis, texto de apoio mais claro, só o passo atual com botão cheio */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]):not([data-theme="blue"]) .ecnav{background:#14174A;border-bottom-color:#3B4290;box-shadow:0 6px 16px -8px rgba(0,0,0,.6)}
+  :root:not([data-theme="light"]):not([data-theme="blue"]) .hint,
+  :root:not([data-theme="light"]):not([data-theme="blue"]) .setup .txt .hint{font-size:16px;color:var(--muted)}
+  :root:not([data-theme="light"]):not([data-theme="blue"]) .setup{background:color-mix(in srgb,var(--bg) 45%,var(--card));border-color:transparent}
+  :root:not([data-theme="light"]):not([data-theme="blue"]) .setup a.btn.primary.go{background:transparent;color:var(--primary);border-color:var(--primary);box-shadow:none}
+  :root:not([data-theme="light"]):not([data-theme="blue"]) .setup li.cur a.btn.primary.go{background:var(--primary);color:var(--on-primary);border-color:var(--primary-deep);box-shadow:0 3px 0 var(--primary-deep)}
+}
