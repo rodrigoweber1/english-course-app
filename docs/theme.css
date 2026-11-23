@@ -184,7 +184,19 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--primary)}
 }
 :root[data-theme="blue"]{
   --bg:#0A2A66; --fg:#EAF2FF; --card:#123A86; --muted:#B9CBF0; --border:#3A68BF;
-  --primary:#8DBBFF; --primary-deep:#5C97F0; --on-primary:#06214F; --tint:#1D4CA3; --tutor:#1D4CA3;
+  --primary:#FFFFFF; --primary-deep:#BFD6FF; --on-primary:#0A2A66; --tint:#1D4CA3; --tutor:#1D4CA3;
   --accent:#FDBA74; --ok:#6EE7A0; --danger:#FCA5A5; --warn:#FCD34D; color-scheme:dark;
   --shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 2px 4px rgba(0,0,0,.25), 0 14px 28px -12px rgba(0,10,40,.6);
 }
+
+/* Tema azul: contraste com branco. Botão principal = branco cheio; botões comuns = contorno branco; campos = brancos */
+:root[data-theme="blue"] button:not(.primary):not(.rec):not(.danger),:root[data-theme="blue"] a.btn:not(.primary){background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.85);box-shadow:none}
+:root[data-theme="blue"] button.primary,:root[data-theme="blue"] a.btn.primary{background:#fff;color:#0A2A66;border-color:#fff;box-shadow:0 3px 0 #9DB9EB}
+:root[data-theme="blue"] .opts button.sel{background:#fff;color:#0A2A66;border-color:#fff}
+:root[data-theme="blue"] input[type=text],:root[data-theme="blue"] input[type=number],:root[data-theme="blue"] input[type=time],:root[data-theme="blue"] input[type=date],:root[data-theme="blue"] input[type=email],:root[data-theme="blue"] input[type=password],:root[data-theme="blue"] select,:root[data-theme="blue"] textarea{background:#fff;color:#0A2A66;border-color:#fff}
+:root[data-theme="blue"] .card{border-color:rgba(255,255,255,.35)}
+:root[data-theme="blue"] .tabs button{border:0}
+:root[data-theme="blue"] .tabs button[aria-selected="true"]{background:#fff;color:#0A2A66}
+:root[data-theme="blue"] .ecmenu a.on{background:#fff;color:#0A2A66}
+:root[data-theme="blue"] .ecmenu a:hover,:root[data-theme="blue"] button:hover:not(:disabled):not(.primary){background:rgba(255,255,255,.14)}
+:root[data-theme="blue"] a{color:#fff}
