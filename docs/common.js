@@ -9,17 +9,24 @@ const EC = {
     const pw = (() => { try { return localStorage.getItem('ec_pw') || ''; } catch { return ''; } })();
     const opts = { headers: { 'x-app-password': pw } };
     const tok = await EC.token(); if (tok) opts.headers['Authorization'] = 'Bearer ' + tok;
+    // Na web (fora do localhost) a IA roda na Edge Function do Supabase; no computador, no servidor local
+    const remote = EC.remoteApi();
+    if (remote) opts.headers['apikey'] = EC.cfg.anonKey;
     if (body) { opts.method = 'POST'; opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
-    const r = await fetch(path, opts);
+    let r;
+    try { r = await fetch(remote ? EC.cfg.url.replace(/\/$/, '') + '/functions/v1' + path : path, opts); }
+    catch { throw new Error(remote ? 'Could not reach the Ask Emma service. Check your internet connection.' : 'This feature needs the local server: start the app with iniciar.bat (localhost:3000).'); }
     const d = await r.json().catch(() => ({}));
+    if (remote && r.status === 401 && d.auth) { EC.set('auth', null); location.replace('login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() || 'index.html')); throw new Error(d.error || 'Please sign in again.'); }
     if (r.status === 401 && d.auth && !retried) {
       const p = prompt('App password:');
       if (p) { try { localStorage.setItem('ec_pw', p); } catch {} return EC.api(path, body, true); }
     }
-    if (!r.ok && !d.error && (r.status === 404 || r.status === 405)) throw new Error('This feature needs the local server: start the app with iniciar.bat (localhost:3000).');
+    if (!r.ok && !d.error && (r.status === 404 || r.status === 405)) throw new Error(remote ? 'The Ask Emma service is not available yet (function not published).' : 'This feature needs the local server: start the app with iniciar.bat (localhost:3000).');
     if (!r.ok) throw new Error(d.error || 'Error ' + r.status);
     return d;
   },
+  remoteApi(){ return !!(EC.cfg && EC.authOn) && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname); },
   evaluate(task, payload){ return EC.api('/api/eval', { task, payload }); },
 
   nav(active){
@@ -138,7 +145,7 @@ const EC = {
 speechSynthesis.onvoiceschanged = () => {};
 
 // Memória para o professor: erros persistentes, expressões recentes e estruturas C1 a provocar (6.2, 6.3, 6.4)
-EC.loadC1 = () => fetch('/api/c1').then(r => r.json()).then(l => { EC.set('c1inv', l); return l; }).catch(() => EC.get('c1inv', []));
+EC.loadC1 = () => EC.api('/api/c1').then(l => { EC.set('c1inv', l); return l; }).catch(() => EC.get('c1inv', []));
 EC.c1Status = () => { const inv = EC.get('c1inv', []), used = EC.get('c1used', {}); return { inv, used, pct: inv.length ? Math.round(inv.filter(x => used[x]).length / inv.length * 100) : 0 }; };
 EC.memoryText = function(){
   const parts = [], pe = EC.trainingErrors();
@@ -424,7 +431,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.1.0';
+EC.VERSION = '1.2.0';
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
   try {
