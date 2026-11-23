@@ -10,16 +10,19 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
 <title>Slang and expressions · Ask Enma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Lexend:wght@400;500;600&display=swap">
 <script>__L('common.css')</script>
 <style>
   .reg{display:inline-block;padding:2px 12px;border-radius:999px;font-size:15px;font-weight:500;border:1px solid var(--border);background:var(--tint)}
-  .reg.careful{border-color:#c0392b;color:#c0392b}
+  .reg.careful{border-color:var(--danger);color:var(--danger)}
   .opt{display:block;width:100%;text-align:left;margin:8px 0;min-height:48px;white-space:normal}
-  .opt.ok{border-color:#1a7f4b;background:#e7f6ee;color:#14532d}
-  .opt.no{border-color:#c0392b;background:#fdecea;color:#7f1d1d}
+  .opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--card));color:var(--fg)}
+  .opt.no{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 14%,var(--card));color:var(--fg)}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
   .chip{padding:4px 12px;border-radius:999px;border:1px solid var(--border);font-size:15px}
-  .chip.used{background:#e7f6ee;border-color:#1a7f4b;color:#14532d}
+  .chip.used{background:color-mix(in srgb,var(--ok) 16%,var(--card));border-color:var(--ok);color:var(--fg)}
   .big{font-size:1.5em;margin:4px 0}
   #log .card{margin:8px 0}
 </style>

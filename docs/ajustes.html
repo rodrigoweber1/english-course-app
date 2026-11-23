@@ -10,8 +10,11 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
 <title>Settings · Ask Enma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Lexend:wght@400;500;600&display=swap">
 <script>__L('common.css')</script>
-<style>.dayrow{display:flex;gap:8px;align-items:center;margin:6px 0}.dayrow span{width:80px}</style>
+<style>.dayrow{display:flex;gap:8px;align-items:center;margin:6px 0}.dayrow label{width:104px;margin:0}</style>
 <script>__L('theme.css')</script>
 </head>
 <body>
@@ -25,7 +28,7 @@
 
 <h2>Reminders</h2>
 <label>Remind me before the lesson (minutes, comma-separated)</label><input type="text" id="leads" aria-label="Minutes in advance">
-<label>Reminder the day before, at (leave empty to skip)</label><input type="time" id="dayBefore">
+<label for="dayBefore">Reminder the day before, at (leave empty to skip)</label><input type="time" id="dayBefore">
 <label><input type="checkbox" id="secOn"> Second reminder if the lesson has not started, after</label><input type="number" id="secH" min="1" max="12" style="width:90px"> hours
 <label>Free listening: days</label><div id="listenDays" class="row"></div>
 <label>Free listening time</label><input type="time" id="listenT">
@@ -41,7 +44,7 @@
 
 <h2>Appearance</h2>
 <label for="theme">Colour theme</label>
-<select id="theme"><option value="auto">Automatic (follows your device)</option><option value="light">Light</option><option value="blue">Blue (dark blue, the opposite of light)</option></select>
+<select id="theme"><option value="auto">Automatic (follows your device)</option><option value="light">Light</option><option value="blue">Blue (dark blue background, white buttons)</option></select>
 
 <h2>Teacher</h2>
 <label>Voice speed</label><input type="number" id="rate" min="0.6" max="1.4" step="0.1" style="width:100px">
@@ -77,7 +80,7 @@ let s = EC.settings();
 const classes = document.getElementById('classes');
 const order = [1,2,3,4,5,6,0];
 function drawClasses(){
-  classes.innerHTML = order.map(d => `<div class="dayrow"><span>${EC.DAYS[d]}</span><input type="checkbox" data-d="${d}" ${s.classes[d]?'checked':''} aria-label="Lesson on ${EC.DAYS[d]}"><input type="time" data-t="${d}" value="${s.classes[d]||'19:00'}" aria-label="Time on ${EC.DAYS[d]}"></div>`).join('');
+  classes.innerHTML = order.map(d => `<div class="dayrow"><label for="cd${d}">${EC.DAYS[d]}</label><input type="checkbox" id="cd${d}" data-d="${d}" ${s.classes[d]?'checked':''} aria-label="Lesson on ${EC.DAYS[d]}"><input type="time" data-t="${d}" value="${s.classes[d]||'19:00'}" aria-label="Time on ${EC.DAYS[d]}"></div>`).join('');
   listenDays.innerHTML = order.map(d => `<label style="margin:0"><input type="checkbox" data-l="${d}" ${s.listen.days.includes(d)?'checked':''}> ${EC.DAYS[d].slice(0,3)}</label>`).join('');
   writeD.innerHTML = order.map(d => `<option value="${d}" ${s.write.day===d?'selected':''}>${EC.DAYS[d]}</option>`).join('');
   classes.oninput = () => { collect(); note(); };
@@ -113,7 +116,7 @@ if (iOS) { iph.style.display = ''; iph.onclick = () => { read(); location.href =
 ics.onclick = () => { read(); const b = new Blob([EC.icsExport(s)], { type:'text/calendar' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'ask-enma.ics'; a.click(); };
 function drawUsage(u){
   const sp = EC.totalSpent(u), credit = +s.credit || 5, pct = Math.min(100, sp.usd / credit * 100), left = Math.max(0, credit - sp.usd);
-  const col = pct >= 90 ? '#c0392b' : pct >= 70 ? '#d98c00' : 'var(--primary)';
+  const col = pct >= 90 ? 'var(--danger)' : pct >= 70 ? 'var(--warn)' : 'var(--primary)';
   const m = new Date().toISOString().slice(0,7), d = u[m] || {};
   const rows = Object.entries(d).map(([k,v]) => `<tr><td>${EC.esc(k)}</td><td>${v.calls} calls</td><td>${v.input} in / ${v.output} out tokens</td><td>≈ US$ ${EC.costOf(k, v).toFixed(2)}</td></tr>`).join('');
   document.getElementById('usage').innerHTML = `<p style="margin:0 0 6px"><b>US$ ${sp.usd.toFixed(2)}</b> used of US$ ${credit.toFixed(2)} · <b>US$ ${left.toFixed(2)}</b> left (${Math.round(pct)}%)</p>

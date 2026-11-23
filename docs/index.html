@@ -10,15 +10,11 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
 <title>Ask Enma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Lexend:wght@400;500;600&display=swap">
 <script>__L('common.css')</script>
 <style>
-  :root{
-    --bg:#F8FAFC; --fg:#0F172A; --card:#FFFFFF; --muted:#475569; --border:#CBD5E1;
-    --primary:#2563EB; --on-primary:#FFFFFF; --accent:#C2410C; --tutor:#EFF6FF; --danger:#DC2626; --ok:#15803D;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{--bg:#0B1220; --fg:#E2E8F0; --card:#111A2E; --muted:#A3B1C6; --border:#26334D; --primary:#3B82F6; --tutor:#14233F; --accent:#FB923C; --ok:#4ADE80}
-  }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--fg);font:19px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;height:calc(100dvh / var(--z,1));display:flex;flex-direction:column;overflow:hidden}
   header,footer{flex-shrink:0}
@@ -52,7 +48,7 @@
   button:disabled{opacity:.5;cursor:not-allowed}
   button.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary);font-weight:600}
   button.primary:hover:not(:disabled){background:var(--primary);opacity:.9}
-  button.rec{background:var(--danger);border-color:var(--danger);color:#fff}
+  button.rec{background:var(--danger);border-color:var(--danger);color:var(--on-danger)}
   svg{width:18px;height:18px;flex:none}
   :focus-visible{outline:3px solid var(--primary);outline-offset:2px}
   .status{max-width:720px;margin:0 auto 8px;font-size:17px;color:var(--muted);min-height:21px}
@@ -495,7 +491,8 @@ function interestsText(){
 // Primeiros passos do curso: 1 Prova de nível, 2 Interesses, 3 Aula
 (function(){
   const hasInt = !!loadInterests(), hasLvl = !!EC.get('level', null), cdue = EC.checkpointDue(), review = EC.interestsReviewDue(), resuming = $('resumeBox').style.display === 'block';
-  const row = (n, done, title, sub, href) => `<li class="${done ? 'done' : ''}"><span class="num">${done ? '✓' : n}</span><span class="txt"><b>${title}</b><br><span class="hint">${sub}</span></span>${done ? '<a class="chg" href="'+href+'">Edit</a>' : '<a class="btn primary go" href="'+href+'">Start</a>'}</li>`;
+  let curTaken = false;
+  const row = (n, done, title, sub, href) => { const cur = !done && !curTaken; if (cur) curTaken = true; return `<li class="${done ? 'done' : cur ? 'cur' : ''}"><span class="num">${done ? '✓' : n}</span><span class="txt"><b>${title}</b><br><span class="hint">${sub}</span></span>${done ? '<a class="chg" href="'+href+'">Edit</a>' : '<a class="btn primary go" href="'+href+'">Start</a>'}</li>`; };
   $('setup').innerHTML = '<b class="sh">Getting started</b><ol>' +
     row(1, hasLvl, 'Placement test', 'Find your starting level (up to 25 min).', 'prova.html') +
     row(2, hasInt, 'Your interests', 'Tell Enma what you enjoy talking about (3 min).', 'interesses.html') +
