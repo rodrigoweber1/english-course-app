@@ -23,3 +23,20 @@ returns void language sql security definer set search_path = public as $$
 $$;
 revoke all on function add_usage(text, text, bigint, bigint) from public, anon, authenticated;
 grant execute on function add_usage(text, text, bigint, bigint) to service_role;
+
+-- 3) Backup automático do progresso de cada aluno (uma linha por conta; cada um só enxerga a própria)
+create table if not exists user_data (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table user_data enable row level security;
+drop policy if exists "own row select" on user_data;
+drop policy if exists "own row insert" on user_data;
+drop policy if exists "own row update" on user_data;
+create policy "own row select" on user_data for select to authenticated using (user_id = auth.uid());
+create policy "own row insert" on user_data for insert to authenticated with check (user_id = auth.uid());
+create policy "own row update" on user_data for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create or replace function touch_user_data() returns trigger language plpgsql as $$ begin new.updated_at = now(); return new; end $$;
+drop trigger if exists user_data_touch on user_data;
+create trigger user_data_touch before insert or update on user_data for each row execute function touch_user_data();

@@ -431,7 +431,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.2.1';
+EC.VERSION = '1.3.0';
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
   try {
@@ -454,4 +454,72 @@ document.addEventListener('DOMContentLoaded', () => {
   EC.checkUpdate();
   setInterval(EC.checkUpdate, 30 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) EC.checkUpdate(); });
+});
+
+
+// ---------- Backup automático na nuvem (tabela user_data do Supabase, uma linha por conta) ----------
+// Grava sozinho, em segundo plano. Um aparelho sem progresso recebe a cópia da nuvem ao entrar.
+EC.cloudSkip = ['ec_auth', 'ec_pw', 'ec_lastBackup', 'ec_lesson', 'ec_zoomIdx', 'ec_cloudStamp', 'ec_cloudHash', 'ec_cloudUser', 'ec_cloudErr'];
+EC.cloudKeys = () => Object.keys(localStorage).filter(k => k.startsWith('ec_') && !EC.cloudSkip.includes(k));
+EC.hasProgress = () => ['ec_interests', 'ec_level', 'ec_sessions', 'ec_errors', 'ec_vocab', 'ec_writings', 'ec_cards', 'ec_checkpoints'].some(k => { try { const v = localStorage.getItem(k); return !!v && v !== '[]' && v !== '{}' && v !== 'null'; } catch { return false; } });
+EC.cloudBlob = () => { const keys = {}; EC.cloudKeys().sort().forEach(k => { keys[k] = localStorage.getItem(k); }); return keys; };
+EC.hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return s.length + ':' + h; };
+EC.cloudOn = () => !!(EC.authOn && EC.session() && !/login\.html$/.test(location.pathname));
+EC.cloudReq = async (path, opts = {}) => {
+  const t = await EC.token(); if (!t) throw new Error('not signed in');
+  const r = await fetch(EC.cfg.url.replace(/\/$/, '') + '/rest/v1' + path, { ...opts, headers: { apikey: EC.cfg.anonKey, Authorization: 'Bearer ' + t, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  if (!r.ok) throw new Error('cloud ' + r.status);
+  return r.status === 204 ? null : r.json();
+};
+EC.cloudGet = async full => (await EC.cloudReq('/user_data?select=' + (full ? 'data,updated_at' : 'updated_at') + '&limit=1'))[0] || null;
+EC.cloudPush = async force => {
+  if (!EC.cloudOn() || EC.cloudBusy) return 'skip';
+  EC.cloudBusy = true;
+  try {
+    const uid = EC.session().user?.id, mine = EC.get('cloudUser', null);
+    if (!uid || (mine && mine !== uid)) return 'otheruser';
+    if (!EC.hasProgress()) return 'empty';
+    const keys = EC.cloudBlob(), h = EC.hash(JSON.stringify(keys));
+    if (!force && h === EC.get('cloudHash', null)) return 'same';
+    const cur = await EC.cloudGet(false);
+    if (cur && !force && cur.updated_at !== EC.get('cloudStamp', null)) { EC.cloudConflictBanner(); return 'conflict'; }
+    const rows = await EC.cloudReq('/user_data?on_conflict=user_id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify({ user_id: uid, data: { version: 1, keys } }) });
+    EC.set('cloudStamp', rows[0].updated_at); EC.set('cloudHash', h); EC.set('cloudUser', uid); EC.set('cloudErr', null);
+    return 'saved';
+  } catch (e) { EC.set('cloudErr', String(e.message || e)); return 'error'; }
+  finally { EC.cloudBusy = false; }
+};
+EC.cloudRestore = async () => {
+  const row = await EC.cloudGet(true); if (!row) return false;
+  const keys = row.data?.keys || {};
+  EC.cloudKeys().forEach(k => localStorage.removeItem(k));
+  Object.entries(keys).forEach(([k, v]) => { if (/^ec_[\w-]+$/.test(k) && !EC.cloudSkip.includes(k) && typeof v === 'string') localStorage.setItem(k, v); });
+  EC.set('cloudStamp', row.updated_at); EC.set('cloudHash', EC.hash(JSON.stringify(EC.cloudBlob()))); EC.set('cloudUser', EC.session().user?.id || null); EC.set('cloudErr', null);
+  return true;
+};
+EC.cloudConflictBanner = () => {
+  if (document.getElementById('ecsync')) return;
+  const b = document.createElement('div'); b.id = 'ecsync'; b.setAttribute('role', 'alert');
+  b.innerHTML = '<span>Your cloud backup has newer changes from another device.</span><button type="button" class="primary" id="ecsyncCloud">Use the cloud copy</button><button type="button" id="ecsyncHere">Keep this device</button>';
+  document.body.appendChild(b);
+  b.querySelector('#ecsyncCloud').onclick = async () => { b.querySelector('#ecsyncCloud').disabled = true; try { if (await EC.cloudRestore()) location.reload(); } catch { b.remove(); } };
+  b.querySelector('#ecsyncHere').onclick = async () => { await EC.cloudPush(true); b.remove(); };
+};
+EC.cloudInit = async () => {
+  if (!EC.cloudOn()) return;
+  try {
+    const uid = EC.session().user?.id, mine = EC.get('cloudUser', null);
+    if (!uid || (mine && mine !== uid)) return;        // os dados deste aparelho são de outra conta
+    const cur = await EC.cloudGet(false);
+    if (!cur) { await EC.cloudPush(); return; }
+    const dirty = EC.hash(JSON.stringify(EC.cloudBlob())) !== EC.get('cloudHash', null), newer = cur.updated_at !== EC.get('cloudStamp', null);
+    if (!EC.hasProgress() || (!dirty && newer)) { if (await EC.cloudRestore()) location.reload(); return; }
+    if (newer) EC.cloudConflictBanner(); else await EC.cloudPush();
+  } catch (e) { EC.set('cloudErr', String(e.message || e)); }
+};
+document.addEventListener('DOMContentLoaded', () => {
+  if (!EC.cloudOn()) return;
+  setTimeout(EC.cloudInit, 800);
+  setInterval(() => EC.cloudPush(), 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) EC.cloudPush(); });
 });

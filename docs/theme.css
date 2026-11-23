@@ -151,5 +151,6 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--primary)}
 .ecfoot{text-align:center;color:var(--muted);font-size:15px;padding:28px 16px 36px}
 .ecfoot .ecver{opacity:.8}
 .card .ecfoot{padding:14px 0 0;font-size:14px}
-#ecupd{position:fixed;left:12px;right:12px;margin:0 auto;width:auto;max-width:640px;top:12px;z-index:100;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;text-align:center;padding:12px 16px;border-radius:16px;background:var(--card);color:var(--fg);border:2px solid var(--primary);box-shadow:0 10px 30px rgba(49,46,129,.28);font-size:16px}
-#ecupd button{min-height:40px;padding:0 16px}
+#ecsync{top:76px}
+#ecupd,#ecsync{position:fixed;left:12px;right:12px;margin:0 auto;width:auto;max-width:640px;top:12px;z-index:100;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;text-align:center;padding:12px 16px;border-radius:16px;background:var(--card);color:var(--fg);border:2px solid var(--primary);box-shadow:0 10px 30px rgba(49,46,129,.28);font-size:16px}
+#ecupd button,#ecsync button{min-height:40px;padding:0 16px}

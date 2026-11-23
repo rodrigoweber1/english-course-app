@@ -46,7 +46,12 @@
 <div class="card" id="fbBox"><p class="hint">No feedback yet. Emma will ask you, at the right moments, whether her scores and corrections felt fair.</p></div>
 
 <h2>Backup</h2>
-<p class="hint">Your progress lives only in this browser. Save a copy to a file now and then, and keep it somewhere safe (for example in OneDrive). Use it to restore everything on another computer or after clearing the browser.</p>
+<h3>Automatic cloud backup</h3>
+<p class="hint" id="cloudNote">—</p>
+<div class="row"><button id="cloudNow">Save now</button><button id="cloudBack">Restore from the cloud</button></div>
+<p class="hint" id="cloudMsg" role="status"></p>
+<h3>Backup file</h3>
+<p class="hint">An extra copy you can keep yourself (for example in OneDrive). Use it to restore everything on another computer or after clearing the browser.</p>
 <div class="row"><button id="bkOut">Export my progress</button><button id="bkIn">Import from a file</button><input type="file" id="bkFile" accept=".json,application/json" hidden></div>
 <p class="hint" id="bkNote"></p>
 
@@ -117,6 +122,22 @@ credit.onchange = () => { s.credit = Math.max(1, +credit.value || 5); EC.set('se
   const N = { fair:'Fair and useful', harsh:'Too harsh', generous:'Too generous', wrong:'Something looked wrong' }, K = { lesson:'Lesson report', writing:'Writing marking', placement:'Placement test' };
   fbBox.innerHTML = l.slice(-8).reverse().map(x => `<p style="margin:6px 0">${x.date.slice(0,10)} · <b>${K[x.kind]||x.kind}</b>: ${N[x.v]||x.v}${x.note ? ' — ' + EC.esc(x.note) : ''}</p>`).join('') + `<p><button id="fbCopy">Copy feedback to share with Claude</button> <span class="hint" id="fbMsg"></span></p>`;
   fbCopy.onclick = async () => { const t = l.map(x => `${x.date.slice(0,10)} | ${x.kind} | ${x.v}${x.note ? ' | ' + x.note : ''}${x.ctx ? ' | ' + x.ctx : ''}`).join('\n'); try { await navigator.clipboard.writeText(t); fbMsg.textContent = 'Copied. Paste it in the chat.'; } catch { fbMsg.textContent = 'Could not copy.'; } };
+})();
+
+// Backup na nuvem
+(function(){
+  const note = () => {
+    if (!EC.authOn) { cloudNote.textContent = 'Sign-in is not connected, so there is no cloud backup.'; cloudNow.disabled = cloudBack.disabled = true; return; }
+    const st = EC.get('cloudStamp', null), er = EC.get('cloudErr', null);
+    cloudNote.textContent = 'Your progress is saved to your account automatically while you study, with no action needed. ' + (st ? 'Last saved: ' + new Date(st).toLocaleString('en-GB') + '.' : 'Not saved yet.') + (er ? ' Last problem: ' + er + '.' : '');
+  };
+  note();
+  cloudNow.onclick = async () => { cloudMsg.textContent = 'Saving…'; const r = await EC.cloudPush(); cloudMsg.textContent = ({ saved:'Saved to the cloud.', same:'Already up to date.', empty:'There is no progress to save yet.', conflict:'The cloud has newer changes: choose an option in the box at the top.', otheruser:'This device holds data from another account.', error:'Could not save. Check your connection, and that the database setup was run.', skip:'Please wait a moment and try again.' })[r] || ''; note(); };
+  cloudBack.onclick = async () => {
+    if (!confirm('Replace the progress on this device with your cloud copy? What is here now will be lost.')) return;
+    try { if (await EC.cloudRestore()) { cloudMsg.textContent = 'Restored. Reloading…'; setTimeout(() => location.reload(), 800); } else cloudMsg.textContent = 'There is no cloud copy yet.'; }
+    catch { cloudMsg.textContent = 'Could not reach the cloud.'; }
+  };
 })();
 
 // Backup
