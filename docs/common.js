@@ -454,7 +454,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.5.1';
+EC.VERSION = '1.5.2';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Grava sozinho, em segundo plano. Um aparelho sem progresso recebe a cópia da nuvem ao entrar.
 EC.cloudSkip = ['ec_auth', 'ec_pw', 'ec_lastBackup', 'ec_lesson', 'ec_zoomIdx', 'ec_cloudStamp', 'ec_cloudHash', 'ec_cloudUser', 'ec_cloudErr'];
 EC.cloudKeys = () => Object.keys(localStorage).filter(k => k.startsWith('ec_') && !EC.cloudSkip.includes(k));
-EC.hasProgress = () => ['ec_interests', 'ec_level', 'ec_sessions', 'ec_errors', 'ec_vocab', 'ec_writings', 'ec_cards', 'ec_checkpoints'].some(k => { try { const v = localStorage.getItem(k); return !!v && v !== '[]' && v !== '{}' && v !== 'null'; } catch { return false; } });
+EC.hasProgress = () => ['ec_interests', 'ec_level', 'ec_sessions', 'ec_errors', 'ec_vocab', 'ec_writings', 'ec_cards', 'ec_checkpoints', 'ec_placement_draft', 'ec_checkpoint_draft'].some(k => { try { const v = localStorage.getItem(k); return !!v && v !== '[]' && v !== '{}' && v !== 'null'; } catch { return false; } });
 EC.cloudBlob = () => { const keys = {}; EC.cloudKeys().sort().forEach(k => { keys[k] = localStorage.getItem(k); }); return keys; };
 EC.hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return s.length + ':' + h; };
 EC.cloudOn = () => !!(EC.authOn && EC.session() && !/login\.html$/.test(location.pathname));

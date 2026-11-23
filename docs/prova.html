@@ -81,6 +81,7 @@ const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Ma
 
 function intro(){
   stopTimer();
+  EC.cloudPush();   // guarda na nuvem o que já foi feito (as partes concluídas)
   const last = EC.get('level', null);
   const hs = EC.get('level_history', []), prevL = hs.length ? hs[hs.length-1] : null;
   app.innerHTML = `<h1>${CP ? 'Checkpoint test · week ' + CP : 'Placement test'}</h1>
