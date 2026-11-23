@@ -14,7 +14,7 @@ const EC = {
     if (remote) opts.headers['apikey'] = EC.cfg.anonKey;
     if (body) { opts.method = 'POST'; opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     let r;
-    try { r = await fetch(remote ? EC.cfg.url.replace(/\/$/, '') + '/functions/v1' + path : path, opts); }
+    try { r = await fetch(remote ? EC.cfg.url.replace(/\/$/, '') + '/functions/v1/' + (EC.cfg.fn || 'api') + path : path, opts); }
     catch { throw new Error(remote ? 'Could not reach the Ask Emma service. Check your internet connection.' : 'This feature needs the local server: start the app with iniciar.bat (localhost:3000).'); }
     const d = await r.json().catch(() => ({}));
     if (remote && r.status === 401 && d.auth) { EC.set('auth', null); location.replace('login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() || 'index.html')); throw new Error(d.error || 'Please sign in again.'); }
@@ -431,7 +431,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.2.0';
+EC.VERSION = '1.2.1';
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
   try {
