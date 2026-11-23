@@ -99,8 +99,8 @@ Deno.serve(async (req: Request) => {
   }
   if (route === 'chat') {
     try {
-      const { messages, phase, tutorShare, interests, memory, sessionType } = await req.json();
-      const system = buildChatSystem({ phase, interests, memory, sessionType, tutorShare });
+      const { messages, phase, tutorShare, interests, memory, sessionType, extra } = await req.json();
+      const system = buildChatSystem({ phase, interests, memory, sessionType, tutorShare, extra });
       const text = await claude({ model: MODEL, system, messages, max_tokens: phase === 'input' ? 600 : 200 });
       return json(200, { text });
     } catch (e) { return json(500, { error: String((e as Error).message || e) }); }

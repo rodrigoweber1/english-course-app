@@ -38,9 +38,10 @@ const EC = {
       escuta: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="7" rx="1.5"/><rect x="17" y="14" width="4" height="7" rx="1.5"/>',
       escrita: '<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14 7l3 3"/>',
       interesses: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+      girias: '<path d="M12 3l2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/>',
       ajustes: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
     };
-    const items = [['prova.html','Placement test'],['interesses.html','Interests'],['index.html','Lesson'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['ajustes.html','Settings']];
+    const items = [['prova.html','Placement test'],['interesses.html','Interests'],['index.html','Lesson'],['plano.html','Plan'],['biblioteca.html','Library'],['escuta.html','Listening'],['escrita.html','Writing'],['girias.html','Slang'],['ajustes.html','Settings']];
     const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Main menu');
     n.innerHTML = '<a class="brand" href="index.html" aria-label="Ask Emma, home"><span class="logo" aria-hidden="true">E</span><b>Ask Emma</b></a>' +
       items.map(([h,t]) => `<a href="${h}" ${h===active?'class="on" aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[h.replace('.html','')]}</svg>${t}</a>`).join('');
@@ -431,7 +432,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.3.3';
+EC.VERSION = '1.4.0';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {

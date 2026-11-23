@@ -94,8 +94,8 @@ async function handleApi(req, res) {
       return res.end(JSON.stringify({ error: 'The ANTHROPIC_API_KEY is missing from the .env file' }));
     }
     try {
-      const { messages, phase, tutorShare, interests, memory, sessionType } = JSON.parse(await readBody(req));
-      const system = buildChatSystem({ phase, interests, memory, sessionType, tutorShare });
+      const { messages, phase, tutorShare, interests, memory, sessionType, extra } = JSON.parse(await readBody(req));
+      const system = buildChatSystem({ phase, interests, memory, sessionType, tutorShare, extra });
       const text = await claude({ model: MODEL, system, messages, max_tokens: phase === 'input' ? 600 : 200 });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ text }));

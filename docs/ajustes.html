@@ -120,7 +120,7 @@ credit.onchange = () => { s.credit = Math.max(1, +credit.value || 5); EC.set('se
 // Feedback guardado
 (function(){
   const l = EC.get('aiFeedback', []); if (!l.length) return;
-  const N = { fair:'Fair and useful', harsh:'Too harsh', generous:'Too generous', wrong:'Something looked wrong' }, K = { lesson:'Lesson report', writing:'Writing marking', placement:'Placement test' };
+  const N = { fair:'Fair and useful', harsh:'Too harsh', generous:'Too generous', wrong:'Something looked wrong' }, K = { lesson:'Lesson report', writing:'Writing marking', placement:'Placement test', slang:'Slang session' };
   fbBox.innerHTML = l.slice(-8).reverse().map(x => `<p style="margin:6px 0">${x.date.slice(0,10)} · <b>${K[x.kind]||x.kind}</b>: ${N[x.v]||x.v}${x.note ? ' — ' + EC.esc(x.note) : ''}</p>`).join('') + `<p><button id="fbCopy">Copy feedback to share with Claude</button> <span class="hint" id="fbMsg"></span></p>`;
   fbCopy.onclick = async () => { const t = l.map(x => `${x.date.slice(0,10)} | ${x.kind} | ${x.v}${x.note ? ' | ' + x.note : ''}${x.ctx ? ' | ' + x.ctx : ''}`).join('\n'); try { await navigator.clipboard.writeText(t); fbMsg.textContent = 'Copied. Paste it in the chat.'; } catch { fbMsg.textContent = 'Could not copy.'; } };
 })();

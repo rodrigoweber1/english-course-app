@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* carrega os arquivos do app com o número da versão no endereço: o navegador nunca mistura arquivo velho com versão nova */(function(){var v='';try{v=new URLSearchParams(location.search).get('v')||localStorage.getItem('ecasset')||''}catch(e){}window.__L=function(f){var q=v?'?v='+encodeURIComponent(v):'';document.write(/\.css$/.test(f)?'<link rel="stylesheet" href="'+f+q+'">':'<script src="'+f+q+'"><\/script>')}})()</script>
+<title>Slang and expressions · Ask Emma</title>
+<script>__L('common.css')</script>
+<style>
+  .reg{display:inline-block;padding:2px 12px;border-radius:999px;font-size:15px;font-weight:500;border:1px solid var(--border);background:var(--tint)}
+  .reg.careful{border-color:#c0392b;color:#c0392b}
+  .opt{display:block;width:100%;text-align:left;margin:8px 0;min-height:48px;white-space:normal}
+  .opt.ok{border-color:#1a7f4b;background:#e7f6ee;color:#14532d}
+  .opt.no{border-color:#c0392b;background:#fdecea;color:#7f1d1d}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .chip{padding:4px 12px;border-radius:999px;border:1px solid var(--border);font-size:15px}
+  .chip.used{background:#e7f6ee;border-color:#1a7f4b;color:#14532d}
+  .big{font-size:1.5em;margin:4px 0}
+  #log .card{margin:8px 0}
+</style>
+<script>__L('theme.css')</script>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>__L('config.js')</script>
+<script>__L('common.js')</script>
+<script>
+EC.nav('girias.html');
+const REG = { neutral:'Neutral', informal:'Informal', 'very informal':'Very informal', careful:'Careful: may offend' };
+const rnd = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(x => x[1]);
+const S = { pack: null, i: 0, qs: [], qi: 0, score: 0, hist: [], used: new Set(), t0: 0 };
+const $ = id => document.getElementById(id);
+
+function interestsText(){
+  const d = EC.get('interests', null); if (!d) return '';
+  return Object.entries(d.picks || {}).filter(([, v]) => v.length).map(([k, v]) => k + ': ' + v.join(', ')).join('. ');
+}
+
+// 1. Início
+function intro(){
+  const d = EC.get('interests', null), areas = (d && d.areas) || [], saved = EC.get('slangPack', null);
+  app.innerHTML = `<h1>Slang and expressions</h1>
+  <p class="muted">An extra session of about 15 minutes, apart from your lessons. Emma prepares a pack of real British slang, idioms and phrasal verbs. You learn them, take a short quiz and then chat with Emma, trying to use them.</p>
+  ${saved ? `<div class="card"><b>Pack in progress</b><p class="hint">${EC.esc(saved.theme)} · ${saved.items.length} expressions</p><button class="primary" id="resume">Continue this pack</button></div>` : ''}
+  <div class="card"><h2 style="margin-top:0">New pack</h2>
+  <label for="theme">Theme</label><select id="theme"><option value="">Surprise me (from your interests)</option>${areas.map(a => `<option>${EC.esc(a)}</option>`).join('')}<option value="__other">Another theme…</option></select>
+  <input type="text" id="other" placeholder="e.g. at work, football, dating, travelling" style="width:100%;display:none;margin-top:8px" aria-label="Your theme">
+  <label for="count">How many expressions</label><select id="count"><option>6</option><option selected>8</option><option>10</option></select>
+  <p style="margin-top:14px"><button class="primary" id="mk">Create my pack</button></p><p class="err" id="err" role="alert"></p></div>
+  <p class="hint">Expressions you learn here go to your Library, for spaced review, and are not repeated in new packs.</p>`;
+  theme.onchange = () => { other.style.display = theme.value === '__other' ? '' : 'none'; if (theme.value === '__other') other.focus(); };
+  if (saved) $('resume').onclick = () => { S.pack = saved; S.i = 0; learn(); };
+  mk.onclick = async () => {
+    const th = theme.value === '__other' ? other.value.trim() : theme.value;
+    mk.disabled = true; mk.textContent = 'Emma is preparing your pack…'; err.textContent = '';
+    try {
+      const r = await EC.evaluate('slang_pack', { theme: th || 'everyday life', count: +count.value, seen: EC.get('slangSeen', []), interests: interestsText() });
+      const items = (r.items || []).filter(x => x && x.term && x.meaning && x.example).map(x => ({ ...x, register: REG[x.register] ? x.register : 'informal', type: x.type || 'expression' }));
+      if (items.length < 3) throw new Error('The pack came back incomplete. Please try again.');
+      S.pack = { theme: String(r.theme || th || 'Everyday life').slice(0, 60), items, date: EC.today() };
+      EC.set('slangPack', S.pack); S.i = 0; learn();
+    } catch (e) { err.textContent = e.message; mk.disabled = false; mk.textContent = 'Create my pack'; }
+  };
+}
+
+// 2. Aprender
+function learn(){
+  const it = S.pack.items[S.i], n = S.pack.items.length;
+  app.innerHTML = `<p class="muted">${EC.esc(S.pack.theme)} · expression ${S.i + 1} of ${n}</p><div class="pbar" aria-hidden="true"><i style="width:${(S.i + 1) / n * 100}%"></i></div>
+  <div class="card"><h2 class="big">${EC.esc(it.term)}</h2>
+  <p><span class="reg">${EC.esc(it.type || 'expression')}</span> <span class="reg ${it.register === 'careful' ? 'careful' : ''}">${EC.esc(REG[it.register] || it.register || '')}</span></p>
+  <p><b>Meaning:</b> ${EC.esc(it.meaning)}</p><p><b>Example:</b> <i>${EC.esc(it.example)}</i></p>${it.tip ? `<p class="hint">${EC.esc(it.tip)}</p>` : ''}
+  <div class="row"><button id="hear">Hear it</button><button id="bk" ${S.i ? '' : 'disabled'}>Back</button><button class="primary" id="nx">${S.i + 1 < n ? 'Next' : 'Start the quiz'}</button></div><p class="hint" id="hst" role="status"></p></div>`;
+  hear.onclick = async () => { hear.disabled = true; hst.textContent = ''; try { await EC.speak(it.term + '. ' + it.example); } catch { hst.textContent = 'Could not play the voice in this browser.'; } hear.disabled = false; };
+  bk.onclick = () => { S.i--; learn(); };
+  nx.onclick = () => { if (S.i + 1 < n) { S.i++; learn(); } else quiz(); };
+}
+
+// 3. Teste rápido
+function quiz(){
+  const its = S.pack.items, gap = (it) => new RegExp(it.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  S.qs = rnd(its.map((it, k) => {
+    const useGap = k % 2 === 0 && gap(it).test(it.example);
+    const others = rnd(its.filter(o => o !== it)).slice(0, 3);
+    return useGap
+      ? { q: 'Which expression fits the gap?', text: it.example.replace(gap(it), '_____'), opts: rnd([it, ...others]).map(o => o.term), right: it.term, it }
+      : { q: `What does “${it.term}” mean?`, text: '', opts: rnd([it, ...others]).map(o => o.meaning), right: it.meaning, it };
+  }));
+  S.qi = 0; S.score = 0; ask();
+}
+function ask(){
+  const q = S.qs[S.qi], n = S.qs.length;
+  app.innerHTML = `<p class="muted">Quiz · question ${S.qi + 1} of ${n}</p><div class="pbar" aria-hidden="true"><i style="width:${(S.qi) / n * 100}%"></i></div>
+  <div class="card"><h2 style="margin-top:0">${EC.esc(q.q)}</h2>${q.text ? `<p class="big"><i>${EC.esc(q.text)}</i></p>` : ''}<div id="ops">${q.opts.map((o, k) => `<button class="opt" data-k="${k}">${EC.esc(o)}</button>`).join('')}</div><div id="fbk" role="status"></div></div>`;
+  document.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+    const ok = q.opts[+b.dataset.k] === q.right; if (ok) S.score++;
+    document.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (q.opts[+x.dataset.k] === q.right) x.classList.add('ok'); });
+    if (!ok) b.classList.add('no');
+    fbk.innerHTML = `<p class="${ok ? 'okc' : 'err'}">${ok ? 'Correct!' : 'Not quite.'}</p><p class="hint"><b>${EC.esc(q.it.term)}</b>: ${EC.esc(q.it.meaning)}<br><i>${EC.esc(q.it.example)}</i></p><button class="primary" id="qn">${S.qi + 1 < n ? 'Next question' : 'Chat with Emma'}</button>`;
+    qn.onclick = () => { if (S.qi + 1 < n) { S.qi++; ask(); } else talk(); };
+  });
+}
+
+// 4. Conversa com a Emma, usando as expressões
+const norm = t => t.toLowerCase().replace(/[’']/g, "'");
+function usedIn(text, term){
+  const t = norm(text), key = norm(term).replace(/\(.*?\)/g, '').replace(/\b(someone|somebody|sth|sb|something)\b/g, '').replace(/\s+/g, ' ').trim();
+  if (!key) return false;
+  if (t.includes(key)) return true;
+  const ws = key.split(' ').filter(w => w.length > 2);
+  return ws.length > 1 && ws.every(w => t.includes(w.slice(0, Math.max(3, w.length - 3))));
+}
+function talk(){
+  S.hist = [{ role: 'user', content: 'Hello Emma, I am ready for the slang chat.' }]; S.used = new Set(); S.t0 = Date.now();
+  const its = S.pack.items, extra = its.map(i => i.term + ': ' + i.meaning).join('\n');
+  app.innerHTML = `<h1>Chat with Emma</h1><p class="hint">A relaxed chat. Try to use the expressions below naturally; they turn green when you do. About 8 to 10 minutes is enough. You can also type.</p>
+  <div class="chips" id="chips">${its.map(i => `<span class="chip" data-t="${EC.esc(i.term)}">${EC.esc(i.term)}</span>`).join('')}</div>
+  <div id="log"></div><p class="err" id="st" role="status"></p>
+  <div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…" aria-label="Type your answer"><button id="snd">Send</button><button id="fin">Finish</button></div>`;
+  const add = (w, t) => { log.insertAdjacentHTML('beforeend', `<div class="card"><b>${w}</b><br>${EC.esc(t)}</div>`); window.scrollTo(0, document.body.scrollHeight); };
+  const turn = async () => {
+    st.textContent = 'Emma is thinking…';
+    try { const d = await EC.api('/api/chat', { messages: S.hist, phase: 'slang', extra, interests: interestsText() }); S.hist.push({ role: 'assistant', content: d.text }); add('Emma', d.text); st.textContent = ''; await EC.speak(d.text); }
+    catch (e) { st.textContent = e.message; S.hist.pop(); }
+  };
+  const say = t => {
+    t = t.trim(); if (!t) return; tx.value = ''; S.hist.push({ role: 'user', content: t }); add('You', t);
+    its.forEach(i => { if (usedIn(t, i.term)) { S.used.add(i.term); const c = [...document.querySelectorAll('.chip')].find(x => x.dataset.t === i.term); if (c) c.classList.add('used'); } });
+    turn();
+  };
+  mic.onclick = async () => { mic.disabled = true; st.textContent = 'Listening…'; try { const r = await EC.listen(); say(r.text); } catch (e) { st.textContent = e.message; } mic.disabled = false; if (st.textContent === 'Listening…') st.textContent = ''; };
+  snd.onclick = () => say(tx.value);
+  tx.onkeydown = e => { if (e.key === 'Enter') say(tx.value); };
+  fin.onclick = done;
+  turn();
+}
+
+// 5. Resumo: guarda tudo na Biblioteca
+function done(){
+  const its = S.pack.items, n = its.length, minutes = Math.max(1, Math.round((Date.now() - S.t0) / 60000));
+  EC.addVocab(its.map(i => ({ term: i.term, definition: i.meaning, example: i.example, register: i.register })));
+  const seen = EC.get('slangSeen', []); its.forEach(i => { if (!seen.includes(i.term)) seen.push(i.term); }); EC.set('slangSeen', seen.slice(-300));
+  const lg = EC.get('slangLog', []); lg.push({ date: EC.today(), theme: S.pack.theme, n, quiz: S.score, quizOf: S.qs.length, used: S.used.size, talkMin: minutes }); EC.set('slangLog', lg);
+  EC.set('slangPack', null);
+  app.innerHTML = `<h1>Session complete</h1><div class="card"><p>Quiz: <b>${S.score}/${S.qs.length}</b><br>Used in the chat: <b>${S.used.size}/${n}</b> expressions</p>
+  ${its.map(i => `<p style="margin:6px 0">${S.used.has(i.term) ? '✓' : '·'} <b>${EC.esc(i.term)}</b> <span class="hint">${EC.esc(i.meaning)}</span></p>`).join('')}
+  <p class="hint">All ${n} expressions were saved to your <a href="biblioteca.html">Library</a> for spaced review. The ones you did not use yet are good candidates for your next lesson.</p></div>
+  <div id="fbHere"></div><div class="row"><button class="primary" id="again">New pack</button><a class="btn" href="index.html">Back to the lesson</a></div>`;
+  again.onclick = intro;
+  EC.askFeedback($('fbHere'), 'slang', 'Were these expressions natural and useful for you?', S.pack.theme);
+}
+intro();
+</script>
+</body>
+</html>
