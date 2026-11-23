@@ -224,3 +224,6 @@ body:not(:has(#chat)) .ecfoot{margin-top:auto}
 }
 
 @media (max-width:360px){.ecnav .brand b{font-size:18px}.ecnav .brand{gap:6px}}
+
+.donepill{background:color-mix(in srgb,var(--ok) 22%,var(--card));color:var(--fg);border:1px solid var(--ok);font-weight:600}
+button.donebtn{border-color:var(--ok)}
