@@ -181,11 +181,11 @@ function speaking(){
   const add = (w,t) => { log.insertAdjacentHTML('beforeend', `<div class="card"><b>${w}</b><br>${EC.esc(t)}</div>`); };
   const turn = async () => {
     st.textContent = 'Enma is thinking…';
-    try { const d = await EC.api('/api/chat', { messages: hist, phase:'placement' }); hist.push({ role:'assistant', content:d.text }); add('Enma', d.text); st.textContent=''; await EC.speak(d.text); }
+    try { const d = await EC.api('/api/chat', { messages: hist, phase:'placement' }); hist.push({ role:'assistant', content:d.text }); add('Enma', d.text); if (st.textContent.startsWith('Enma')) st.textContent=''; await EC.speak(d.text); }
     catch(e){ st.textContent = e.message; hist.pop(); }
   };
   const say = t => { t=t.trim(); if(!t) return; tx.value=''; hist.push({ role:'user', content:t }); add('You', t); turns++; turn(); };
-  mic.onclick = async () => { mic.disabled = true; st.textContent = 'Listening…'; try { const r = await EC.listen(); say(r.text); } catch(e){ st.textContent = e.message; } mic.disabled = false; if (!st.textContent.startsWith('Enma')) st.textContent=''; };
+  mic.onclick = async () => { mic.disabled = true; st.textContent = 'Listening…'; try { const r = await EC.listen(); st.textContent = ''; say(r.text); } catch(e){ st.textContent = e.message; } mic.disabled = false; };
   snd.onclick = () => say(tx.value);
   fin.onclick = async () => {
     stopTimer();

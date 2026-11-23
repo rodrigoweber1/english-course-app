@@ -130,12 +130,14 @@ const EC = {
     return new Promise((resolve, reject) => {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) return reject(new Error('This browser has no speech recognition. Please use Chrome or Edge.'));
+      try { speechSynthesis.cancel(); } catch {}   // a voz falando ao mesmo tempo atrapalha o microfone
       const r = new SR(); r.lang = 'en-GB'; r.interimResults = false; r.maxAlternatives = 1;
-      let out = { text:'', confidence:1 };
+      let out = { text:'', confidence:1 }, err = null;
+      const WHY = { 'not-allowed': 'The microphone is blocked. Allow it for this site in your browser settings, or type your answer.', 'service-not-allowed': 'The microphone is blocked. Allow it for this site in your browser settings, or type your answer.', 'audio-capture': 'No microphone was found. Connect one, or type your answer.', 'network': 'Speech recognition needs an internet connection. Try again, or type your answer.' };
       r.onresult = e => { out = { text: e.results[0][0].transcript, confidence: e.results[0][0].confidence }; };
-      r.onerror = e => { if (e.error !== 'no-speech') reject(new Error('Microphone: ' + e.error)); };
-      r.onend = () => resolve(out);
-      r.start();
+      r.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') err = WHY[e.error] || ('Microphone problem: ' + e.error + '. You can type your answer instead.'); };
+      r.onend = () => err ? reject(new Error(err)) : out.text.trim() ? resolve(out) : reject(new Error('I did not hear anything. Speak right after pressing the button, or type your answer.'));
+      try { r.start(); } catch (e) { reject(new Error('Could not start the microphone. Try again, or type your answer.')); }
     });
   },
 
@@ -471,7 +473,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.5.15';
+EC.VERSION = '1.5.16';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
