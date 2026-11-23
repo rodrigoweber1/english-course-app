@@ -103,10 +103,18 @@ const EC = {
       speechSynthesis.addEventListener('voiceschanged', () => { clearTimeout(t); res(speechSynthesis.getVoices()); }, { once: true });
     });
   },
+  // Escolhe automaticamente uma voz britânica FEMININA (a da Enma). A escolha manual em Settings vale mais.
+  // Cada aparelho tem nomes diferentes (iPhone: Kate, Serena...; Windows/Edge: Sonia, Libby...; Chrome: Google UK English Female).
   voice(){
-    const v = speechSynthesis.getVoices(), n = EC.get('settings', {}).voiceName, gb = v.filter(x => /en[-_]GB/i.test(x.lang));
-    return (n && v.find(x => x.name === n)) || gb.find(x => /natural/i.test(x.name) && /sonia|libby|maisie|hazel|female/i.test(x.name)) || gb.find(x => /female|sonia|libby|hazel|google uk english female/i.test(x.name)) || gb[0] || v.find(x => /^en/i.test(x.lang)) || null;
+    const v = speechSynthesis.getVoices(), n = EC.get('settings', {}).voiceName;
+    const chosen = n && v.find(x => x.name === n); if (chosen) return chosen;
+    const FEM = /\b(kate|serena|stephanie|martha|sonia|libby|maisie|hazel|susan|fiona|amy|emma|olivia|karen|moira|zira|samantha|victoria|allison|ava|nicky|jenny|aria|linda|catherine|heera|tessa|veena|joanna|salli|kimberly|ivy|female)\b/i;
+    const MALE = /\b(daniel|arthur|oliver|ryan|george|thomas|rishi|alfie|male|gordon|lee|james|harry|david|mark|guy|alex|fred|tom|brian|matthew|justin|joey|russell|aaron|bruce|liam)\b/i;
+    const score = x => (FEM.test(x.name) ? 100 : 0) - (MALE.test(x.name) ? 200 : 0) + (/en[-_]GB/i.test(x.lang) ? 50 : /en[-_](AU|IE|IN|ZA|NZ)/i.test(x.lang) ? 10 : /^en/i.test(x.lang) ? 5 : -1000)
+      + (/natural|neural|online/i.test(x.name) ? 20 : 0) + (/premium|enhanced/i.test(x.name) ? 15 : 0) + (x.localService ? 1 : 0);
+    return v.slice().sort((a, b) => score(b) - score(a))[0] || null;
   },
+
   // Mesma voz em toda a aplicação (aula, entrevista da prova, biblioteca, ajustes)
   async speak(text, rate){
     await EC.voicesReady();
@@ -463,7 +471,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.5.14';
+EC.VERSION = '1.5.15';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {

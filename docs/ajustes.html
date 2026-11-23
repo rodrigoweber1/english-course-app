@@ -99,7 +99,7 @@ function fill(){
   listenT.value = s.listen.time; writeT.value = s.write.time; qFrom.value = s.quiet.from; qTo.value = s.quiet.to; rate.value = s.rate; drawPauses();
   permNote.textContent = window.Notification ? 'Status: ' + ({granted:'on',denied:'blocked',default:'not turned on'}[Notification.permission]) : 'This browser does not support notifications.';
 }
-function voices(){ const v = speechSynthesis.getVoices().filter(x=>/en-GB/i.test(x.lang)); voiceName.innerHTML = '<option value="">Automatic</option>' + v.map(x=>`<option ${s.voiceName===x.name?'selected':''}>${EC.esc(x.name)}</option>`).join(''); }
+function voices(){ const v = speechSynthesis.getVoices().filter(x=>/en-GB/i.test(x.lang)); voiceName.innerHTML = '<option value="">Automatic (a female British voice)</option>' + v.map(x=>`<option ${s.voiceName===x.name?'selected':''}>${EC.esc(x.name)}</option>`).join(''); }
 speechSynthesis.onvoiceschanged = voices; voices();
 addPause.onclick = () => { if (pFrom.value && pTo.value && pTo.value >= pFrom.value) { s.pauses.push({ from:pFrom.value, to:pTo.value }); drawPauses(); note(); } };
 perm.onclick = async () => { if (window.Notification) { await Notification.requestPermission(); fill(); } };
