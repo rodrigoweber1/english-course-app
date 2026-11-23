@@ -86,6 +86,14 @@ const EC = {
     document.documentElement.style.zoom = lv[i]; document.documentElement.style.setProperty('--z', lv[i]);
   },
 
+  // Aparência: 'auto' (segue o aparelho), 'light' (clara) ou 'blue' (azul predominante, o inverso da clara)
+  theme(v){
+    if (v) EC.set('theme', v);
+    const t = EC.get('theme', 'auto');
+    if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+    const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t === 'blue' ? '#0A2A66' : '#4F46E5';
+  },
+
   // Voz britânica do sistema
   // As vozes do navegador carregam de forma assíncrona: espera até 1,5 s para não cair na voz padrão (não britânica)
   voicesReady(){
@@ -357,6 +365,7 @@ EC.checkReminders = function(){
 };
 setInterval(EC.checkReminders, 30000);
 EC.zoom();
+EC.theme();
 
 
 // ---------- Login (Supabase Auth via REST, sem biblioteca) ----------
@@ -454,7 +463,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.5.3';
+EC.VERSION = '1.5.4';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {

@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 const { C1_INVENTORY, TASKS, FEEDS, getFeed, parseJson, buildChatSystem } = require('./prompts');
 const MODEL = process.env.TUTOR_MODEL || 'claude-haiku-5-5';
 const PUBLIC = path.join(__dirname, 'docs');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.json': 'application/json', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 
 
 function readBody(req) {

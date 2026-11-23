@@ -174,3 +174,17 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--primary)}
 .ecmenu .ecout{display:block;width:calc(100% - 8px);margin:4px;min-height:44px;font-size:16px}
 .ecmenu a:focus-visible,.ecmenubtn:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 @media (max-width:640px){.ecmenubtn span{display:none}.ecmenubtn{padding:0 12px}.ecmenu{right:8px}}
+
+/* Escolhas feitas em Settings > Appearance (valem mais que o modo escuro do aparelho) */
+:root[data-theme="light"]{
+  --bg:#EEF2FF; --fg:#1E1B4B; --card:#FFFFFF; --muted:#4B5276; --border:#C7D2FE;
+  --primary:#4F46E5; --primary-deep:#3730A3; --on-primary:#FFFFFF; --tint:#E0E7FF; --tutor:#E0E7FF;
+  --accent:#C2410C; --ok:#15803D; --danger:#DC2626; --warn:#B45309; color-scheme:light;
+  --shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 2px 4px rgba(49,46,129,.07), 0 14px 28px -12px rgba(49,46,129,.22);
+}
+:root[data-theme="blue"]{
+  --bg:#0A2A66; --fg:#EAF2FF; --card:#123A86; --muted:#B9CBF0; --border:#3A68BF;
+  --primary:#8DBBFF; --primary-deep:#5C97F0; --on-primary:#06214F; --tint:#1D4CA3; --tutor:#1D4CA3;
+  --accent:#FDBA74; --ok:#6EE7A0; --danger:#FCA5A5; --warn:#FCD34D; color-scheme:dark;
+  --shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 2px 4px rgba(0,0,0,.25), 0 14px 28px -12px rgba(0,10,40,.6);
+}
