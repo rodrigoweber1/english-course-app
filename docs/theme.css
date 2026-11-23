@@ -98,12 +98,11 @@ footer{background:color-mix(in srgb,var(--card) 94%,transparent)!important;box-s
 #start h2{font-size:30px;margin:4px 0 8px}
 
 @media (max-width:640px){
-  .ecnav .brand b{display:none}
   .ecnav .brand{padding-right:10px}
   h1{font-size:28px}
 }
 .ecnav{scrollbar-width:none}.ecnav::-webkit-scrollbar{display:none}
-@media (max-width:1000px){.ecnav .brand b{display:none}.ecnav .brand{padding-right:10px}}
+@media (max-width:1000px){.ecnav .brand{padding-right:10px}}
 header h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .track.empty .t{background:var(--tint)!important}
 /* Primeiros passos */
@@ -223,3 +222,5 @@ body:not(:has(#chat)) .ecfoot{margin-top:auto}
   *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
   button:hover,button:active{transform:none!important}
 }
+
+@media (max-width:360px){.ecnav .brand b{font-size:18px}.ecnav .brand{gap:6px}}
