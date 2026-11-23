@@ -65,18 +65,16 @@ const WPROMPT = 'Some people think that city centres should be closed to private
 
 const CP = +new URLSearchParams(location.search).get('checkpoint') || 0;   // semana do checkpoint (0 = prova de nível inicial)
 const DRAFT = CP ? 'checkpoint_draft' : 'placement_draft';
-// Cronômetro de cada parte (a prova toda dura no máximo 25 minutos: 6 + 4 + 5 + 8 = 23, mais a correção pela IA)
+// Cronômetro de cada parte (a prova toda dura no máximo 25 minutos: 6 + 4 + 8 + 7 = 25, mais a correção pela IA)
 let TM = null;
 function stopTimer(){ clearInterval(TM); TM = null; const e = document.getElementById('tmr'); if (e) e.remove(); }
 function startTimer(min, onEnd){
   stopTimer();
-  let until = Date.now() + min * 60000, extra = 0; const e = document.createElement('div');
+  const until = Date.now() + min * 60000; const e = document.createElement('div');
   e.id = 'tmr'; e.className = 'pill'; e.setAttribute('role', 'timer'); e.setAttribute('aria-label', 'Time left in this part');
   e.style.cssText = 'position:fixed;right:12px;top:78px;z-index:15;background:var(--card);font-variant-numeric:tabular-nums;font-weight:600';
-  const tx = document.createElement('span'), more = document.createElement('button');
-  more.type = 'button'; more.textContent = '+2 min'; more.setAttribute('aria-label', 'Add two minutes'); more.style.cssText = 'min-height:32px;padding:0 10px;margin-left:8px;font-size:14px';
-  more.onclick = () => { until += 120000; if (++extra >= 2) more.remove(); tick(); };
-  e.append(tx, more); document.body.appendChild(e);
+  const tx = document.createElement('span');
+  e.append(tx); document.body.appendChild(e);
   const tick = () => {
     const s = Math.max(0, Math.round((until - Date.now()) / 1000));
     tx.textContent = 'Time left ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
@@ -102,8 +100,8 @@ function intro(){
   <div class="row">${[['g1','grammar','1. Grammar and vocabulary'],['g2','reading','2. Reading'],['g3','writing','3. Writing'],['g5','speaking','4. Speaking']].map(([id,k,t]) => `<button id="${id}" class="${res[k] ? 'donebtn' : (k === nextK ? 'primary' : '')}" ${res[k] ? 'aria-label="' + t + ', done"' : ''}>${res[k] ? '✓ ' : ''}${t}</button>`).join('')}<button id="gr" class="${nextK ? '' : 'primary'}">See result</button></div>
   ${CP && prevL ? `<div class="card"><b>Your last measured level:</b> ${EC.esc(prevL.overall)} · ${EC.esc(prevL.date)}</div>` : (last ? `<div class="card"><b>Last result:</b> ${EC.esc(last.overall)} · ${EC.esc(last.date)}</div>` : '')}
   <div class="card"><b>Parts</b><ol>
-   <li>Grammar and vocabulary (up to 6 min)${dn('grammar')}</li><li>Reading (up to 4 min)${dn('reading')}</li><li>Writing (up to 5 min, AI marking)${dn('writing')}</li>
-   <li>Speaking: interview with Enma (up to 8 min, AI)${dn('speaking')}</li></ol>
+   <li>Grammar and vocabulary (up to 6 min)${dn('grammar')}</li><li>Reading (up to 4 min)${dn('reading')}</li><li>Writing (up to 8 min, AI marking)${dn('writing')}</li>
+   <li>Speaking: interview with Enma (up to 7 min, AI)${dn('speaking')}</li></ol>
    <p class="hint">Listening is a separate free test (EF SET); you will find it on the result page. You can do some parts now and continue later.</p></div>`;
   g1.onclick = grammar; g2.onclick = reading; g3.onclick = writing; g5.onclick = speaking; gr.onclick = result;
 }
@@ -157,7 +155,7 @@ function writing(){
   const count = () => wc.textContent = (t.value.trim() ? t.value.trim().split(/\s+/).length : 0) + ' words';
   t.value = EC.get(WD, ''); count();
   t.oninput = () => { count(); EC.set(WD, t.value); };
-  startTimer(5, () => { if (!go.disabled) { if (t.value.trim()) { out.innerHTML = '<p class="muted">Time is up. Sending what you wrote…</p>'; go.click(); } else intro(); } });
+  startTimer(8, () => { if (!go.disabled) { if (t.value.trim()) { out.innerHTML = '<p class="muted">Time is up. Sending what you wrote…</p>'; go.click(); } else intro(); } });
   go.onclick = async () => {
     stopTimer();
     out.innerHTML = '<p class="muted">Marking…</p>'; go.disabled = true;
@@ -193,7 +191,7 @@ function speaking(){
       out.innerHTML = `<div class="card"><b>Speaking level: ${EC.esc(r.cefr)}</b><p>${(r.strengths||[]).map(EC.esc).join('; ')}</p><p>${(r.weaknesses||[]).map(EC.esc).join('; ')}</p></div><button class="primary" onclick="intro()">Continue</button>`;
     } catch(e){ out.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; }
   };
-  startTimer(8, () => { if (turns > 0) fin.click(); else intro(); });
+  startTimer(7, () => { if (turns > 0) fin.click(); else intro(); });
   turn();
 }
 
