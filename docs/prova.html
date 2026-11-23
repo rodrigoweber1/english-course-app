@@ -185,7 +185,7 @@ function speaking(){
     catch(e){ st.textContent = e.message; hist.pop(); }
   };
   const say = t => { t=t.trim(); if(!t) return; tx.value=''; hist.push({ role:'user', content:t }); add('You', t); turns++; turn(); };
-  mic.onclick = async () => { mic.disabled = true; st.textContent = 'Listening…'; try { const r = await EC.listen(); st.textContent = ''; say(r.text); } catch(e){ st.textContent = e.message; } mic.disabled = false; };
+  mic.onclick = async () => { mic.disabled = true; st.textContent = ''; try { const r = await EC.listen({ btn: mic, st }); say(r.text); } catch(e){ st.textContent = e.message; } mic.disabled = false; };
   snd.onclick = () => say(tx.value);
   fin.onclick = async () => {
     stopTimer();

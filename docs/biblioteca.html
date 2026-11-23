@@ -46,7 +46,7 @@ function review(items, key, show, check, save){
       fb.innerHTML = `<div class="card">${txt}</div><p class="muted">How did it go?</p><div class="row"><button data-g="0">Wrong</button><button data-g="1">Hard</button><button data-g="2">Good</button><button data-g="3">Easy</button></div>`;
       fb.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { EC.srsNext(it, +b.dataset.g); save(); i++; step(); });
     };
-    say.onclick = async () => { say.disabled = true; say.textContent = 'Listening…'; try { const r = await EC.listen(); reveal(check(it, r.text)); } catch(e){ fb.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; } say.disabled = false; say.textContent = 'Speak'; };
+    say.onclick = async () => { say.disabled = true; try { const r = await EC.listen({ btn: say }); reveal(check(it, r.text)); } catch(e){ fb.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; } say.disabled = false; };
     skip.onclick = () => reveal(check(it, ''));
   };
   step();

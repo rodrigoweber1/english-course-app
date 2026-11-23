@@ -136,7 +136,7 @@ function talk(){
     its.forEach(i => { if (usedIn(t, i.term)) { S.used.add(i.term); const c = [...document.querySelectorAll('.chip')].find(x => x.dataset.t === i.term); if (c) c.classList.add('used'); } });
     turn();
   };
-  mic.onclick = async () => { mic.disabled = true; st.textContent = 'Listening…'; try { const r = await EC.listen(); say(r.text); } catch (e) { st.textContent = e.message; } mic.disabled = false; if (st.textContent === 'Listening…') st.textContent = ''; };
+  mic.onclick = async () => { mic.disabled = true; st.textContent = ''; try { const r = await EC.listen({ btn: mic, st }); say(r.text); } catch (e) { st.textContent = e.message; } mic.disabled = false; };
   snd.onclick = () => say(tx.value);
   tx.onkeydown = e => { if (e.key === 'Enter') say(tx.value); };
   fin.onclick = done;
