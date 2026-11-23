@@ -431,7 +431,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.3.0';
+EC.VERSION = '1.3.1';
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
   try {
@@ -442,7 +442,14 @@ EC.checkUpdate = async () => {
     const b = document.createElement('div'); b.id = 'ecupd'; b.setAttribute('role', 'status');
     b.innerHTML = `<span>A new version of Ask Emma is available (v${EC.esc(v)}; you have v${EC.VERSION}).</span><button type="button" class="primary" id="ecupdGo">Update now</button><button type="button" id="ecupdLater">Later</button>`;
     document.body.appendChild(b);
-    b.querySelector('#ecupdGo').onclick = () => { const u = new URL(location.href); u.searchParams.set('v', v); location.replace(u.toString()); };
+    b.querySelector('#ecupdGo').onclick = async () => {
+      const go = b.querySelector('#ecupdGo'); go.disabled = true; go.textContent = 'Updating…';
+      // Baixa de novo os arquivos do app (ignora a cópia guardada no aparelho) e só então recarrega
+      const files = ['common.js', 'common.css', 'theme.css', 'config.js', 'version.json', 'index.html', 'login.html', 'plano.html', 'prova.html', 'biblioteca.html', 'escuta.html', 'escrita.html', 'interesses.html', 'ajustes.html'];
+      try { await Promise.all(files.map(f => fetch(f, { cache: 'reload' }).catch(() => {}))); } catch {}
+      try { if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch {}
+      const u = new URL(location.href); u.searchParams.set('v', v); location.replace(u.toString());
+    };
     b.querySelector('#ecupdLater').onclick = () => { try { sessionStorage.setItem('ec_updLater', v); } catch {} b.remove(); };
   } catch {}
 };
