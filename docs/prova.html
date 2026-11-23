@@ -133,6 +133,8 @@ function grammar(){
   };
   startTimer(6, end); next();
 }
+// Tabela com a nota de cada critério (vinda da IA): mostra em que a pessoa foi bem e onde perdeu nível
+const crit = o => o && typeof o === 'object' ? '<table class="crit" aria-label="Level by criterion">' + Object.entries(o).map(([k, v]) => '<tr><td>' + EC.esc(k.charAt(0).toUpperCase() + k.slice(1)) + '</td><td><b>' + EC.esc(String(v)) + '</b></td></tr>').join('') + '</table>' : '';
 const label = s => { const i = Math.max(0, Math.min(3, Math.floor(s + 0.0001))); const hi = s - Math.floor(s) >= .5; return LV[i] + (hi && i < 3 ? '+' : ''); };
 
 // 2. Leitura
@@ -167,7 +169,7 @@ function writing(){
       const r = await EC.evaluate('placement_writing', { prompt: WPROMPT, text: t.value });
       res.writing = { score: Math.max(0, LV.indexOf(r.cefr)), cefr: r.cefr, data: r, text: t.value }; EC.set(DRAFT, res); EC.set(WD, '');
       EC.addErrors(r.errors, 'prova-' + EC.today());
-      out.innerHTML = `<div class="card"><b>Writing level: ${EC.esc(r.cefr)}</b><p>Strengths: ${(r.strengths||[]).map(EC.esc).join('; ')}</p><p>To improve: ${(r.weaknesses||[]).map(EC.esc).join('; ')}</p>${(r.errors||[]).map(e=>`<p>${EC.diffHtml(e.original,e.correction)}<br><span class="muted">${EC.esc(e.explanation)}</span></p>`).join('')}</div><button class="primary" onclick="intro()">Continue</button>`;
+      out.innerHTML = `<div class="card"><b>Writing level: ${EC.esc(r.cefr)}</b>${crit(r.criteria)}<p>Strengths: ${(r.strengths||[]).map(EC.esc).join('; ')}</p><p>To improve: ${(r.weaknesses||[]).map(EC.esc).join('; ')}</p>${(r.errors||[]).map(e=>`<p>${EC.diffHtml(e.original,e.correction)}<br><span class="muted">${EC.esc(e.explanation)}</span></p>`).join('')}</div><button class="primary" onclick="intro()">Continue</button>`;
     } catch(e){ out.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; }
     go.disabled = false;
   };
@@ -193,7 +195,7 @@ function speaking(){
     try {
       const r = await EC.evaluate('placement_speaking', { transcript: hist });
       res.speaking = { score: Math.max(0, LV.indexOf(r.cefr)), cefr: r.cefr, data: r }; EC.set(DRAFT, res); EC.addErrors(r.errors, 'prova-' + EC.today());
-      out.innerHTML = `<div class="card"><b>Speaking level: ${EC.esc(r.cefr)}</b><p>${(r.strengths||[]).map(EC.esc).join('; ')}</p><p>${(r.weaknesses||[]).map(EC.esc).join('; ')}</p></div><button class="primary" onclick="intro()">Continue</button>`;
+      out.innerHTML = `<div class="card"><b>Speaking level: ${EC.esc(r.cefr)}</b>${crit(r.scores)}<p>${(r.strengths||[]).map(EC.esc).join('; ')}</p><p>${(r.weaknesses||[]).map(EC.esc).join('; ')}</p></div><button class="primary" onclick="intro()">Continue</button>`;
     } catch(e){ out.innerHTML = `<p class="err">${EC.esc(e.message)}</p>`; }
   };
   startTimer(8, () => { if (turns > 0) fin.click(); else intro(); });

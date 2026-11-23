@@ -244,3 +244,5 @@ button.rec .recdot{background:#fff}
 @keyframes recpulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.55}}
 .eclive{margin:6px 0;padding:10px 14px;border-radius:14px;background:var(--tint);color:var(--fg);font-size:18px;min-height:1.5em}
 html:root button.rec:disabled:not(.opt):not(.sel){opacity:1;background:var(--danger);color:var(--on-danger);border:1.5px solid var(--danger);border-style:solid}
+
+.crit{margin:8px 0;border-collapse:collapse}.crit td{padding:2px 18px 2px 0;font-size:16px}
