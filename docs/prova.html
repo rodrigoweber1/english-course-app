@@ -88,6 +88,8 @@ let res = EC.get(DRAFT, {});
 const app = document.getElementById('app');
 const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 
+// Sair de uma parte e voltar à lista de partes (pergunta antes só se houver algo feito que se perderia)
+function leave(hasProgress){ if (hasProgress && !confirm('Go back to the parts list? What you did in this part will not be saved.')) return; intro(); }
 function intro(){
   stopTimer();
   EC.cloudPush();   // guarda na nuvem o que já foi feito (as partes concluídas)
@@ -116,7 +118,8 @@ function grammar(){
     const [b,i] = pool.length ? pool[Math.floor(Math.random()*pool.length)] : fallback[0];
     used.add(i); n++;
     const opts = shuffle(b.o.map((t,k)=>({t,ok:k===b.c})));
-    app.innerHTML = `<p class="muted">Question ${n} of 10</p><div class="pbar"><i style="width:${n/10*100}%"></i></div><h2>${EC.esc(b.q)}</h2><div class="opts">${opts.map((o,k)=>`<button data-k="${k}">${EC.esc(o.t)}</button>`).join('')}</div>`;
+    app.innerHTML = `<p class="muted">Question ${n} of 10</p><div class="pbar"><i style="width:${n/10*100}%"></i></div><h2>${EC.esc(b.q)}</h2><div class="opts">${opts.map((o,k)=>`<button data-k="${k}">${EC.esc(o.t)}</button>`).join('')}</div><p><button type="button" id="bk">← Back to parts</button></p>`;
+    bk.onclick = () => leave(n > 1);
     app.querySelectorAll('.opts button').forEach(btn => btn.onclick = () => {
       const ok = opts[btn.dataset.k].ok; hist.push({ level:b.l, ok });
       L = Math.max(0, Math.min(3, L + (ok ? 1 : -1))); next();
@@ -134,10 +137,11 @@ const label = s => { const i = Math.max(0, Math.min(3, Math.floor(s + 0.0001)));
 
 // 2. Leitura
 function reading(){
-  let html = `<h1>Leitura</h1><div class="card"><p class="hint">${EC.esc(READING.title)}</p><p>${EC.esc(READING.text)}</p></div>`;
+  let html = `<h1>Reading</h1><div class="card"><p class="hint">${EC.esc(READING.title)}</p><p>${EC.esc(READING.text)}</p></div>`;
   READING.qs.forEach((q,qi) => { html += `<h2>${qi+1}. ${EC.esc(q.q)}</h2><div class="opts" data-q="${qi}">${q.o.map((o,k)=>`<button data-k="${k}">${EC.esc(o)}</button>`).join('')}</div>`; });
-  html += `<p><button class="primary" id="fin">Concluir</button></p>`; app.innerHTML = html;
+  html += `<p class="row"><button class="primary" id="fin">Finish</button><button type="button" id="bk">← Back to parts</button></p>`; app.innerHTML = html;
   const ans = {};
+  bk.onclick = () => leave(Object.keys(ans).length > 0);
   startTimer(5, () => fin.onclick());
   app.querySelectorAll('.opts button').forEach(b => b.onclick = () => { const g = b.parentElement; g.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); ans[g.dataset.q] = +b.dataset.k; });
   fin.onclick = () => {
@@ -150,7 +154,7 @@ function reading(){
 
 // 3. Escrita (IA)
 function writing(){
-  app.innerHTML = `<h1>Writing</h1><div class="card">${EC.esc(WPROMPT)}</div><textarea id="t" aria-label="Your text"></textarea><p class="hint" id="wc">0 words</p><div class="row"><button class="primary" id="go">Submit for marking</button><button onclick="intro()">Back</button></div><div id="out"></div>`;
+  app.innerHTML = `<h1>Writing</h1><div class="card">${EC.esc(WPROMPT)}</div><textarea id="t" aria-label="Your text"></textarea><p class="hint" id="wc">0 words</p><div class="row"><button class="primary" id="go">Submit for marking</button><button type="button" onclick="intro()">← Back to parts</button></div><p class="hint">Your text is saved while you type, so you can come back to it.</p><div id="out"></div>`;
   const WD = 'writing_text_' + DRAFT;   // o texto é guardado a cada tecla: nunca se perde ao sair, recarregar ou acabar o tempo
   const count = () => wc.textContent = (t.value.trim() ? t.value.trim().split(/\s+/).length : 0) + ' words';
   t.value = EC.get(WD, ''); count();
@@ -172,7 +176,8 @@ function writing(){
 // 4. Fala: entrevista com a Enma
 function speaking(){
   const hist = [{ role:'user', content:'Hello, I am ready for the interview.' }]; let turns = 0;
-  app.innerHTML = `<h1>Speaking interview</h1><p class="hint">Click "Speak", answer, and wait for the pause. Enma does not correct you during the interview. You can also type.</p><div id="log"></div><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…"><button id="snd">Send</button><button id="fin">Finish and assess</button></div><div id="out"></div>`;
+  app.innerHTML = `<h1>Speaking interview</h1><p class="hint">Click "Speak", answer, and wait for the pause. Enma does not correct you during the interview. You can also type.</p><div id="log"></div><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…"><button id="snd">Send</button><button id="fin">Finish and assess</button><button type="button" id="bk">← Back to parts</button></div><div id="out"></div>`;
+  bk.onclick = () => leave(turns > 0);
   const add = (w,t) => { log.insertAdjacentHTML('beforeend', `<div class="card"><b>${w}</b><br>${EC.esc(t)}</div>`); };
   const turn = async () => {
     st.textContent = 'Enma is thinking…';
