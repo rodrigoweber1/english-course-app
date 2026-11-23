@@ -1,0 +1,5 @@
+# Configuração mínima para publicar a Edge Function pelo GitHub Actions
+project_id = "qzuislxznhbehcfkrdom"
+
+[functions.rapid-handler]
+verify_jwt = false   # a própria função confere o login e a lista ALLOWED_EMAILS
