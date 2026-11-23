@@ -1,6 +1,6 @@
-# Publicar a Edge Function do Ask Emma
+# Publicar a Edge Function do Ask Enma
 
-A função `api` faz na nuvem o que o `servidor.js` faz no computador: conversa da Emma, relatórios, correção de escrita e podcasts. Só responde a quem está logado **e** tem o e-mail na lista `ALLOWED_EMAILS`.
+A função `api` faz na nuvem o que o `servidor.js` faz no computador: conversa da Enma, relatórios, correção de escrita e podcasts. Só responde a quem está logado **e** tem o e-mail na lista `ALLOWED_EMAILS`.
 
 ## 1. Banco (uma vez)
 No painel do Supabase: **SQL Editor** > New query > cole o conteúdo de `supabase/setup.sql` > Run.

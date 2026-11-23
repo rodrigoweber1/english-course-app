@@ -1,4 +1,4 @@
--- Ask Emma: preparo do banco no Supabase. Rode UMA vez em SQL Editor.
+-- Ask Enma: preparo do banco no Supabase. Rode UMA vez em SQL Editor.
 
 -- 1) Rotina de keep-alive (evita a pausa do plano gratuito)
 create table if not exists keepalive (id int primary key default 1, pinged_at timestamptz default now());

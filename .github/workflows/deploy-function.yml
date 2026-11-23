@@ -1,4 +1,4 @@
-# Publica a Edge Function do Ask Emma no Supabase sempre que o código dela mudar.
+# Publica a Edge Function do Ask Enma no Supabase sempre que o código dela mudar.
 # Precisa do Secret SUPABASE_ACCESS_TOKEN (Supabase > Account > Access Tokens).
 name: Deploy Supabase function
 

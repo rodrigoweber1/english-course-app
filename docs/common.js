@@ -15,14 +15,14 @@ const EC = {
     if (body) { opts.method = 'POST'; opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     let r;
     try { r = await fetch(remote ? EC.cfg.url.replace(/\/$/, '') + '/functions/v1/' + (EC.cfg.fn || 'api') + path : path, opts); }
-    catch { throw new Error(remote ? 'Could not reach the Ask Emma service. Check your internet connection.' : 'This feature needs the local server: start the app with iniciar.bat (localhost:3000).'); }
+    catch { throw new Error(remote ? 'Could not reach the Ask Enma service. Check your internet connection.' : 'This feature needs the local server: start the app with iniciar.bat (localhost:3000).'); }
     const d = await r.json().catch(() => ({}));
     if (remote && r.status === 401 && d.auth) { EC.set('auth', null); location.replace('login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() || 'index.html')); throw new Error(d.error || 'Please sign in again.'); }
     if (r.status === 401 && d.auth && !retried) {
       const p = prompt('App password:');
       if (p) { try { localStorage.setItem('ec_pw', p); } catch {} return EC.api(path, body, true); }
     }
-    if (!r.ok && !d.error && (r.status === 404 || r.status === 405)) throw new Error(remote ? 'The Ask Emma service is not available yet (function not published).' : 'This feature needs the local server: start the app with iniciar.bat (localhost:3000).');
+    if (!r.ok && !d.error && (r.status === 404 || r.status === 405)) throw new Error(remote ? 'The Ask Enma service is not available yet (function not published).' : 'This feature needs the local server: start the app with iniciar.bat (localhost:3000).');
     if (!r.ok) throw new Error(d.error || 'Error ' + r.status);
     return d;
   },
@@ -51,7 +51,7 @@ const EC = {
     const email = EC.authOn && EC.session() ? (EC.session().user?.email || '') : '';
     const link = ([h,t]) => `<a href="${h}" role="menuitem" ${h===active?'class="on" aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[h.replace('.html','')]}</svg>${t}</a>`;
     const n = document.createElement('nav'); n.className = 'ecnav'; n.setAttribute('aria-label','Main menu');
-    n.innerHTML = '<a class="brand" href="index.html" aria-label="Ask Emma, home"><span class="logo" aria-hidden="true">E</span><b>Ask Emma</b></a>' +
+    n.innerHTML = '<a class="brand" href="index.html" aria-label="Ask Enma, home"><span class="logo" aria-hidden="true">E</span><b>Ask Enma</b></a>' +
       '<span class="ecz"><button type="button" aria-label="Smaller text" title="Smaller text">A−</button><button type="button" aria-label="Larger text" title="Larger text">A+</button></span>' +
       '<button type="button" class="ecmenubtn" id="ecMenuBtn" aria-label="Menu" aria-haspopup="true" aria-expanded="false" aria-controls="ecMenu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span></button>' +
       '<div class="ecmenu" id="ecMenu" role="menu" aria-label="Pages" hidden>' +
@@ -231,7 +231,7 @@ EC.weekNow = function(plan, settings){
 };
 EC.icsExport = function(settings){
   const s = settings || EC.settings(), pad = n => String(n).padStart(2,'0');
-  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Ask Emma//EN','CALSCALE:GREGORIAN'];
+  const out = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Ask Enma//EN','CALSCALE:GREGORIAN'];
   const stamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
   const days = ['SU','MO','TU','WE','TH','FR','SA'];
   const add = (title, day, time, mins) => {
@@ -242,9 +242,9 @@ EC.icsExport = function(settings){
     for (const l of s.leads) out.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${title}`, `TRIGGER:-PT${l}M`, 'END:VALARM');
     out.push('END:VEVENT');
   };
-  Object.entries(s.classes).forEach(([d,t]) => add('Ask Emma: lesson (25 min)', +d, t, 25));
-  (s.listen.days || []).forEach(d => add('Ask Emma: free listening (20 min)', d, s.listen.time, 20));
-  add('Ask Emma: writing task (30 min)', s.write.day, s.write.time, 30);
+  Object.entries(s.classes).forEach(([d,t]) => add('Ask Enma: lesson (25 min)', +d, t, 25));
+  (s.listen.days || []).forEach(d => add('Ask Enma: free listening (20 min)', d, s.listen.time, 20));
+  add('Ask Enma: writing task (30 min)', s.write.day, s.write.time, 30);
   out.push('END:VCALENDAR');
   return out.join('\r\n');
 };
@@ -281,7 +281,7 @@ EC.applyErrorChecks = function(checks, list, sid){
   EC.set('errorStatus', st);
 };
 
-// ---------- Temas: o 👍/👎 das aulas orienta a Emma; revisão periódica dos interesses ----------
+// ---------- Temas: o 👍/👎 das aulas orienta a Enma; revisão periódica dos interesses ----------
 EC.topicFeedback = function(){
   const r = EC.get('topicRatings', []).filter(x => x.topic);
   const uniq = v => [...new Set(r.filter(x => x.v === v).map(x => x.topic.toLowerCase()))].slice(-8);
@@ -356,11 +356,11 @@ EC.checkReminders = function(){
   const mins = (hhmm) => { const [h,m] = hhmm.split(':').map(Number); return h*60+m; };
   const nowM = now.getHours()*60 + now.getMinutes();
   const t = s.classes[now.getDay()];
-  if (t) for (const l of s.leads) if (nowM === mins(t) - l) fire(today+'a'+l, 'Ask Emma', `In ${l} min: ${type}, 25 minutes.`);
-  if (t && s.second.on && nowM === mins(t) + s.second.hours*60 && !EC.get('sessions', []).some(x => x.date === today)) fire(today+'b', 'Ask Emma', "You haven't started today's lesson yet. Shall we do it now?");
-  if ((s.listen.days || []).includes(now.getDay()) && nowM === mins(s.listen.time)) fire(today+'l', 'Ask Emma', 'Today is a free-listening day (20 min).');
-  if (s.write.day === now.getDay() && nowM === mins(s.write.time)) fire(today+'w', 'Ask Emma', "Time for this week's writing task.");
-  if (now.getDay() === 0 && nowM === 20*60) fire(today+'s', 'Ask Emma', 'Weekly summary: check your plan.');
+  if (t) for (const l of s.leads) if (nowM === mins(t) - l) fire(today+'a'+l, 'Ask Enma', `In ${l} min: ${type}, 25 minutes.`);
+  if (t && s.second.on && nowM === mins(t) + s.second.hours*60 && !EC.get('sessions', []).some(x => x.date === today)) fire(today+'b', 'Ask Enma', "You haven't started today's lesson yet. Shall we do it now?");
+  if ((s.listen.days || []).includes(now.getDay()) && nowM === mins(s.listen.time)) fire(today+'l', 'Ask Enma', 'Today is a free-listening day (20 min).');
+  if (s.write.day === now.getDay() && nowM === mins(s.write.time)) fire(today+'w', 'Ask Enma', "Time for this week's writing task.");
+  if (now.getDay() === 0 && nowM === 20*60) fire(today+'s', 'Ask Enma', 'Weekly summary: check your plan.');
   EC.set('fired', fired);
 };
 setInterval(EC.checkReminders, 30000);
@@ -427,7 +427,7 @@ if (EC.authOn && !/login\.html$/.test(location.pathname) && !EC.session()) locat
 EC.backupKeys = () => Object.keys(localStorage).filter(k => k.startsWith('ec_') && !['ec_auth', 'ec_pw', 'ec_lastBackup'].includes(k));
 EC.backupData = () => { const keys = {}; EC.backupKeys().forEach(k => { keys[k] = localStorage.getItem(k); }); return { app: 'english-course', version: 1, date: new Date().toISOString(), keys }; };
 EC.backupRestore = obj => {
-  if (!obj || obj.app !== 'english-course' || typeof obj.keys !== 'object') throw new Error('This file is not an Ask Emma backup.');
+  if (!obj || obj.app !== 'english-course' || typeof obj.keys !== 'object') throw new Error('This file is not an Ask Enma backup.');
   EC.backupKeys().forEach(k => localStorage.removeItem(k));
   Object.entries(obj.keys).forEach(([k, v]) => { if (/^ec_[\w-]+$/.test(k) && !['ec_auth', 'ec_pw'].includes(k) && typeof v === 'string') localStorage.setItem(k, v); });
   return Object.keys(obj.keys).length;
@@ -451,7 +451,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
   el.innerHTML = `<div class="card" style="margin:14px 0"><b>Quick check</b><p style="margin:6px 0 10px">${EC.esc(label)}</p><div class="row" id="fbOpts">${opts.map(([v, t]) => `<button data-v="${v}">${t}</button>`).join('')}</div><div id="fbNote" hidden><label for="fbText" style="margin-top:10px">What was it? (optional)</label><input type="text" id="fbText" style="width:100%"><p style="margin-top:10px"><button class="primary" id="fbSave">Save feedback</button></p></div><p class="hint" id="fbDone" role="status"></p></div>`;
   let pick = null;
   const done = msg => { el.querySelector('#fbNote').hidden = true; el.querySelector('#fbOpts').hidden = true; el.querySelector('#fbDone').textContent = msg; };
-  const save = note => { const l = EC.get('aiFeedback', []); l.push({ kind, date: new Date().toISOString(), v: pick, note: note || '', ctx: ctx || '' }); EC.set('aiFeedback', l); done('Thank you. Your feedback was saved in Settings, so we can improve Emma.'); };
+  const save = note => { const l = EC.get('aiFeedback', []); l.push({ kind, date: new Date().toISOString(), v: pick, note: note || '', ctx: ctx || '' }); EC.set('aiFeedback', l); done('Thank you. Your feedback was saved in Settings, so we can improve Enma.'); };
   el.querySelectorAll('#fbOpts button').forEach(b => b.onclick = () => {
     pick = b.dataset.v;
     if (pick === 'fair') return save('');
@@ -463,7 +463,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.5.4';
+EC.VERSION = '1.5.5';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
@@ -473,7 +473,7 @@ EC.checkUpdate = async () => {
     if (!v || v === EC.VERSION || document.getElementById('ecupd')) return;
     if (sessionStorage.getItem('ec_updLater') === v) return;
     const b = document.createElement('div'); b.id = 'ecupd'; b.setAttribute('role', 'status');
-    b.innerHTML = `<span>A new version of Ask Emma is available (v${EC.esc(v)}; you have v${EC.VERSION}).</span><button type="button" class="primary" id="ecupdGo">Update now</button><button type="button" id="ecupdLater">Later</button>`;
+    b.innerHTML = `<span>A new version of Ask Enma is available (v${EC.esc(v)}; you have v${EC.VERSION}).</span><button type="button" class="primary" id="ecupdGo">Update now</button><button type="button" id="ecupdLater">Later</button>`;
     document.body.appendChild(b);
     b.querySelector('#ecupdGo').onclick = async () => {
       const go = b.querySelector('#ecupdGo'); go.disabled = true; go.textContent = 'Updating…';

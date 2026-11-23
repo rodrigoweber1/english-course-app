@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
-<title>Library · Ask Emma</title>
+<title>Library · Ask Enma</title>
 <script>__L('common.css')</script>
 <style>.tabs{display:flex;gap:6px;margin:8px 0}.tabs button.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}.big{font-size:23px}</style>
 <script>__L('theme.css')</script>
@@ -73,7 +73,7 @@ function errors(){
   const all = EC.get('errors', []), pe = EC.persistentErrors(true), act = pe.filter(e => e.state !== 'resolved'), res = pe.filter(e => e.state === 'resolved'), train = EC.trainingErrors().map(e => e.key);
   const badge = e => ({ active:'Active', improving:`Improving ${e.clean}/3`, relapsed:'Relapsed', resolved:'Resolved ✓' }[e.state]);
   const card = e => `<div class="card">${EC.diffHtml(e.original, e.correction)}<br><span class="muted">${EC.esc(e.type)} · ${e.count} lessons</span> <span class="pill">${badge(e)}</span>${train.includes(e.key) ? ' <span class="pill">in training</span>' : ''}</div>`;
-  view.innerHTML = `<h2>Persistent errors (3+ lessons)</h2><p class="hint">A mistake is resolved when you avoid it on your own in 3 different lessons. Emma trains at most 5 at a time.</p>${act.map(card).join('') || '<p class="hint">None so far.</p>'}${res.length ? `<h2>Resolved (${res.length})</h2>${res.map(card).join('')}` : ''}
+  view.innerHTML = `<h2>Persistent errors (3+ lessons)</h2><p class="hint">A mistake is resolved when you avoid it on your own in 3 different lessons. Enma trains at most 5 at a time.</p>${act.map(card).join('') || '<p class="hint">None so far.</p>'}${res.length ? `<h2>Resolved (${res.length})</h2>${res.map(card).join('')}` : ''}
   <h2>All errors (${all.length})</h2>${all.slice().reverse().slice(0, 60).map(e=>`<p>${EC.diffHtml(e.original, e.correction)}<br><span class="muted">${EC.esc(e.date)} · ${EC.esc(e.type||'')} · ${EC.esc(e.explanation||'')}</span></p>`).join('') || '<p class="hint">No errors recorded.</p>'}`;
 }
 draw();

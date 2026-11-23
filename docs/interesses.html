@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
-<title>Interests · Ask Emma</title>
+<title>Interests · Ask Enma</title>
 <script>__L('common.css')</script>
 <style>
   :root{--bg:#F8FAFC;--fg:#0F172A;--card:#FFFFFF;--muted:#475569;--border:#CBD5E1;--primary:#2563EB;--on-primary:#FFFFFF;--tint:#EFF6FF}
@@ -81,7 +81,7 @@ function render(){
   backB.style.visibility = 'visible'; backB.textContent = step === 0 ? 'Back' : step === 2 ? 'Edit' : 'Back';
   document.getElementById('step').textContent = `Step ${step+1} of 3`;
   if (step === 0){
-    app.innerHTML = `<h1>What are you into?</h1><p>Choose the areas that interest you most. Emma uses these topics for audio, debates and role-plays. You can change them whenever you like.</p>` +
+    app.innerHTML = `<h1>What are you into?</h1><p>Choose the areas that interest you most. Enma uses these topics for audio, debates and role-plays. You can change them whenever you like.</p>` +
       `<div class="opts" id="areas">` + areaNames.map(a => `<label><input type="checkbox" value="${esc(a)}" ${state.areas.includes(a)?'checked':''}><span>${esc(a)}</span></label>`).join('') + '</div>';
     nextB.textContent = 'Continue'; nextB.disabled = state.areas.length === 0;
     app.querySelectorAll('#areas input').forEach(i => i.onchange = () => {

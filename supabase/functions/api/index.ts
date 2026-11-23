@@ -1,10 +1,10 @@
 // @ts-nocheck
 // ARQUIVO GERADO por scripts/build-edge.js a partir de prompts.js e edge/handler.ts. Não edite aqui.
 
-// Prompts e dados da Emma. É a ÚNICA fonte: o servidor local (servidor.js) e a Edge Function do Supabase usam este arquivo.
+// Prompts e dados da Enma. É a ÚNICA fonte: o servidor local (servidor.js) e a Edge Function do Supabase usam este arquivo.
 // Depois de editar, rode:  node scripts/build-edge.js   (gera supabase/functions/api/index.ts)
 
-const SYSTEM = `You are Emma, a warm, curious British English tutor having a spoken conversation with an advanced learner (B2-C1) whose first languages are Spanish and Portuguese.
+const SYSTEM = `You are Enma, a warm, curious British English tutor having a spoken conversation with an advanced learner (B2-C1) whose first languages are Spanish and Portuguese.
 Rules:
 - Use British English (flat, queue, colour). Speak naturally, with phrasal verbs and idioms at about C1 level.
 - Keep every turn SHORT: one or two sentences, 25 words maximum, ending with an open question. The learner should talk about 80% of the time.
@@ -81,7 +81,7 @@ async function getFeed(name) {
   return items;
 }
 
-// Monta as instruções da Emma para uma conversa
+// Monta as instruções da Enma para uma conversa
 function buildChatSystem({ phase, interests, memory, sessionType, tutorShare, extra }) {
   let system = SYSTEM + '\n\n' + (PHASES[phase] || PHASES.warmup);
 
@@ -126,7 +126,7 @@ async function authorize(req: Request) {
   const email = String(u.email || '').toLowerCase();
   const allowed = (Deno.env.get('ALLOWED_EMAILS') || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
   if (!allowed.length) return { err: json(500, { error: 'The ALLOWED_EMAILS secret is not set on the server.' }) };
-  if (!allowed.includes(email)) return { err: json(403, { error: 'This account is not authorised to use Emma.' }) };
+  if (!allowed.includes(email)) return { err: json(403, { error: 'This account is not authorised to use Enma.' }) };
   return { email };
 }
 

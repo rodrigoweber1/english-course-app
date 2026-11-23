@@ -1,7 +1,7 @@
 {
-  "name": "Ask Emma",
-  "short_name": "Ask Emma",
-  "description": "Daily English speaking practice with Emma",
+  "name": "Ask Enma",
+  "short_name": "Ask Enma",
+  "description": "Daily English speaking practice with Enma",
   "start_url": "index.html",
   "scope": "./",
   "display": "standalone",

@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
-<title>Ask Emma</title>
+<title>Ask Enma</title>
 <script>__L('common.css')</script>
 <style>
   :root{
@@ -76,10 +76,10 @@
     <rect x="12" y="14" width="150" height="64" rx="22" fill="#C2410C"/><path d="M44 78l-4 22 26-22z" fill="#C2410C"/>
     <text x="87" y="55" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-size="26" font-weight="700" fill="#fff">Hello!</text>
     <rect x="138" y="42" width="150" height="64" rx="22" fill="#4F46E5"/><path d="M256 106l4 12-24-12z" fill="#4F46E5"/>
-    <text x="213" y="83" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-size="26" font-weight="700" fill="#fff">Hi, Emma</text>
+    <text x="213" y="83" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-size="26" font-weight="700" fill="#fff">Hi, Enma</text>
   </svg>
-  <h2>Lesson with Emma</h2>
-  <p>A <span id="totmin">25</span>-minute lesson in 5 phases. You do most of the talking; Emma listens and asks short questions. Corrections come in the final report.</p>
+  <h2>Lesson with Enma</h2>
+  <p>A <span id="totmin">25</span>-minute lesson in 5 phases. You do most of the talking; Enma listens and asks short questions. Corrections come in the final report.</p>
   <p class="hint">Use Chrome or Edge and allow the microphone. You can type instead if you prefer.</p>
   <div id="setup" class="setup"></div>
   <div id="resumeBox" style="display:none;border:2px solid var(--primary);border-radius:12px;padding:12px;margin:12px 0">
@@ -103,14 +103,14 @@
 
 <header>
   <div class="top">
-    <h1>Ask Emma</h1>
+    <h1>Ask Enma</h1>
     <div><span class="clock" id="clock">00:00</span> / <span id="totclock">25:00</span></div>
-    <label class="hint"><input type="checkbox" id="voiceOut" checked> Emma's voice</label>
+    <label class="hint"><input type="checkbox" id="voiceOut" checked> Enma's voice</label>
   </div>
   <ol class="phases" id="phases"></ol>
   <div class="hint" id="phaseinfo" style="max-width:720px;margin:6px auto 0"></div>
   <div class="meter">
-    <div>Talk time: you <b id="uPct">0%</b> · Emma <b id="tPct">0%</b> (target: 80/20)</div>
+    <div>Talk time: you <b id="uPct">0%</b> · Enma <b id="tPct">0%</b> (target: 80/20)</div>
     <div class="track"><div class="u" id="uBar"></div><div class="t"></div></div>
   </div>
 </header>
@@ -170,11 +170,11 @@ function setStatus(t, err){ statusEl.textContent = t || ''; statusEl.className =
 function addMsg(who, text, cls=''){
   const d = document.createElement('div');
   d.className = 'msg ' + who + ' ' + cls;
-  const w = document.createElement('div'); w.className = 'who'; w.textContent = who === 'tutor' ? 'Emma' : 'You';
+  const w = document.createElement('div'); w.className = 'who'; w.textContent = who === 'tutor' ? 'Enma' : 'You';
   const p = document.createElement('div'); p.textContent = text;
   d.append(w, p); chat.append(d); chat.scrollTop = chat.scrollHeight; return d;
 }
-// Trecho de escuta (fase Input): a Emma lê em voz alta e o texto fica escondido
+// Trecho de escuta (fase Input): a Enma lê em voz alta e o texto fica escondido
 const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
 function splitClip(t){
   const m = t.match(/\[CLIP\]([\s\S]*?)\[\/CLIP\]/i);
@@ -184,7 +184,7 @@ function addTutor(text){
   const { clip, rest } = splitClip(text);
   const d = addMsg('tutor', rest);
   if (clip) {
-    const showNow = false;   // o trecho é sempre ouvido na voz da Emma; a transcrição fica escondida até você pedir
+    const showNow = false;   // o trecho é sempre ouvido na voz da Enma; a transcrição fica escondida até você pedir
     const box = document.createElement('div'); box.className = 'clipbox';
     box.innerHTML = `<div class="cliphead"><span class="cliptitle">Listening clip</span><button type="button" class="clipplay">${ICON_PLAY} Play again</button><button type="button" class="cliptr" aria-expanded="${showNow}">${showNow ? 'Hide' : 'Show'} transcript</button></div><p class="cliptext" ${showNow ? '' : 'hidden'}></p>`;
     box.querySelector('.cliptext').textContent = clip;
@@ -238,7 +238,7 @@ async function speak(text){
 
 async function ask(phaseKey){
   if (busy) return;
-  busy = true; setStatus('Emma is thinking…');
+  busy = true; setStatus('Enma is thinking…');
   try {
     const data = await EC.api('/api/chat', { messages: history, interests: interestsText(), memory: EC.memoryText(), sessionType: EC.sessionType(), phase: phaseKey || PHASES[phase].key, tutorShare: tutorShare() });
     history.push({ role:'assistant', content:data.text });
@@ -292,7 +292,7 @@ function startListening(){
   try { rec.start(); listening = true; micStart = Date.now(); micBtn.classList.add('rec'); micBtn.innerHTML = ICON_STOP + ' Stop'; setStatus('Listening… click Stop when you have finished.'); } catch {}
 }
 
-// Turno longo cronometrado (a Emma fica em silêncio)
+// Turno longo cronometrado (a Enma fica em silêncio)
 function endLongUI(){ longMode = false; clearInterval(longTimer); $('longbox').style.display = 'none'; $('longBtn').disabled = !SR; }
 $('longBtn').onclick = () => {
   if (!rec || listening || busy) return;
@@ -302,7 +302,7 @@ $('longBtn').onclick = () => {
     left--; $('longclock').textContent = fmt(Math.max(left,0)).slice(1);
     if (left <= 0) { clearInterval(longTimer); if (listening) rec.stop(); }
   }, 1000);
-  startListening(); setStatus('Long turn: Emma will not interrupt.');
+  startListening(); setStatus('Long turn: Enma will not interrupt.');
 };
 
 // Nota ao fim de cada fase (a avaliação roda em segundo plano)
@@ -327,7 +327,7 @@ function scorePhase(i, box){
   return job;
 }
 
-// Pausa: congela o relógio, cala a Emma e bloqueia os botões
+// Pausa: congela o relógio, cala a Enma e bloqueia os botões
 $('pause').onclick = () => {
   const ctl = ['mic','send','longBtn','next','text'].map($);
   if (!paused) {
@@ -390,7 +390,7 @@ $('end').onclick = async () => {
   const metrics = { minutes: +(el/60).toFixed(1), userPct: up, tutorPct: tot ? 100-up : 0, userWords: words, wpm: userMs > 5000 ? Math.round(words / (userMs/60000)) : null, avgTurnWords: userMsgs.length ? Math.round(words/userMsgs.length) : 0, turns: userMsgs.length };
   const sid = 'lesson-' + EC.today() + '-' + Date.now();
   const log = EC.get('sessions', []); log.push({ id:sid, date: EC.today(), minutes: metrics.minutes, userMin: +(userMs/60000).toFixed(1), userPct: up, wpm: metrics.wpm, type: PHASES[phase].name }); EC.set('sessions', log);
-  $('sumbody').innerHTML = `<p>Duration: <b>${fmt(el)}</b><br>You spoke: <b>${up}%</b> · Emma: <b>${tot ? 100-up : 0}%</b>${metrics.wpm ? `<br>Words per minute: <b>${metrics.wpm}</b>` : ''}</p><div id="phsc"></div><p class="hint" id="repst">Generating report…</p><div id="rep"></div><div id="fbHere"></div>
+  $('sumbody').innerHTML = `<p>Duration: <b>${fmt(el)}</b><br>You spoke: <b>${up}%</b> · Enma: <b>${tot ? 100-up : 0}%</b>${metrics.wpm ? `<br>Words per minute: <b>${metrics.wpm}</b>` : ''}</p><div id="phsc"></div><p class="hint" id="repst">Generating report…</p><div id="rep"></div><div id="fbHere"></div>
   <p>Did you enjoy today's topic? <button id="up" aria-label="Liked">👍</button> <button id="down" aria-label="Disliked">👎</button></p><div id="ratemsg" role="status"></div>`;
   $('summary').style.display = 'flex';
   Promise.all(scorePending).then(() => {
@@ -498,10 +498,10 @@ function interestsText(){
   const row = (n, done, title, sub, href) => `<li class="${done ? 'done' : ''}"><span class="num">${done ? '✓' : n}</span><span class="txt"><b>${title}</b><br><span class="hint">${sub}</span></span>${done ? '<a class="chg" href="'+href+'">Edit</a>' : '<a class="btn primary go" href="'+href+'">Start</a>'}</li>`;
   $('setup').innerHTML = '<b class="sh">Getting started</b><ol>' +
     row(1, hasLvl, 'Placement test', 'Find your starting level (up to 25 min).', 'prova.html') +
-    row(2, hasInt, 'Your interests', 'Tell Emma what you enjoy talking about (3 min).', 'interesses.html') +
+    row(2, hasInt, 'Your interests', 'Tell Enma what you enjoy talking about (3 min).', 'interesses.html') +
     (review ? `<li><span class="num">↻</span><span class="txt"><b>Review your interests</b><br><span class="hint">Last updated ${review} days ago. Still accurate?</span></span><span style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn primary go" href="interesses.html">Review</a><button type="button" id="intFine" style="min-height:40px">Still fine</button></span></li>` : '') +
     (cdue ? `<li><span class="num">★</span><span class="txt"><b>${cdue.final ? 'Final assessment' : 'Checkpoint test · week ' + cdue.week}</b><br><span class="hint">Time to measure your progress (optional now).</span></span><a class="btn primary go" href="prova.html?checkpoint=${cdue.week}">Start</a></li>` : '') +
-        '<li class="' + (hasInt ? '' : 'locked') + '"><span class="num">3</span><span class="txt"><b>Your lesson with Emma</b><br><span class="hint">' + (hasInt ? 'Ready when you are.' : 'Unlocks after step 2.') + '</span></span></li></ol>';
+        '<li class="' + (hasInt ? '' : 'locked') + '"><span class="num">3</span><span class="txt"><b>Your lesson with Enma</b><br><span class="hint">' + (hasInt ? 'Ready when you are.' : 'Unlocks after step 2.') + '</span></span></li></ol>';
   if (review) $('intFine').onclick = () => { EC.interestsStillFine(); EC.set('interestsSnooze', 0); location.reload(); };
   $('go').disabled = !hasInt && !resuming;
   if (!hasInt) $('go').title = 'Please complete the interests questionnaire first.';

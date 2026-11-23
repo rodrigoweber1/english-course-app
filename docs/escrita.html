@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
-<title>Writing · Ask Emma</title>
+<title>Writing · Ask Enma</title>
 <script>__L('common.css')</script>
 <style>.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:600px){.cols{grid-template-columns:1fr}}.sc{display:flex;justify-content:space-between;gap:8px}</style>
 <script>__L('theme.css')</script>
@@ -61,7 +61,7 @@ async function submit(box, out, btn){
       <p class="hint"><del>removed</del> / <ins>added</ins></p>
       <div id="fbW"></div><h2>Compulsory rewrite</h2><p class="muted">Rewrite the marked sentences. The AI checks whether they are now correct.</p>
       <div id="rw">${(r.errors||[]).slice(0,8).map((e,i)=>`<div class="card"><p>${EC.esc(e.original)}</p><p class="hint">${EC.esc(e.type)}: ${EC.esc(e.explanation)}</p><input type="text" data-i="${i}" style="width:100%" aria-label="Rewrite the sentence"></div>`).join('') || '<p class="hint">No marked errors.</p>'}</div>
-      <button id="chk" class="primary">Check my rewrite</button><div id="chkout"></div><p class="hint">In your next lesson, Emma will ask you to defend the ideas in your text aloud.</p>`;
+      <button id="chk" class="primary">Check my rewrite</button><div id="chkout"></div><p class="hint">In your next lesson, Enma will ask you to defend the ideas in your text aloud.</p>`;
     EC.askFeedback(document.getElementById('fbW'), 'writing', 'Was this marking fair and were the corrections useful?', task.name + ' ' + total + '/20');
     EC.set('lastWriting', { date: EC.today(), task: task.task, text: text.slice(0, 1500) });
     if (window.chk) chk.onclick = async () => {

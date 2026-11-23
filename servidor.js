@@ -120,5 +120,5 @@ if (require.main === module) {
     }
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
     fs.createReadStream(file).pipe(res);
-  }).listen(PORT, () => console.log(`Ask Emma em http://localhost:${PORT}`));
+  }).listen(PORT, () => console.log(`Ask Enma em http://localhost:${PORT}`));
 }

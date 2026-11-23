@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
-<title>Placement test · Ask Emma</title>
+<title>Placement test · Ask Enma</title>
 <script>__L('common.css')</script>
 <script>__L('theme.css')</script>
 </head>
@@ -95,7 +95,7 @@ function intro(){
   <div class="card"><b>Parts</b><ol>
    <li>Grammar and vocabulary (up to 6 min)</li><li>Reading (up to 4 min)</li><li>Writing (up to 5 min, AI marking)</li>
    <li>Listening <span class="pill">free test: EF SET (see the result page)</span></li>
-   <li>Speaking: interview with Emma (up to 8 min, AI)</li></ol>
+   <li>Speaking: interview with Enma (up to 8 min, AI)</li></ol>
    <p class="hint">The AI parts need the API key. You can do some parts now and continue later.</p></div>
   <div class="row"><button class="primary" id="g1">1. Grammar and vocabulary</button><button id="g2">2. Reading</button><button id="g3">3. Writing</button><button id="g5">5. Speaking</button><button id="gr">See result</button></div>`;
   g1.onclick = grammar; g2.onclick = reading; g3.onclick = writing; g5.onclick = speaking; gr.onclick = result;
@@ -161,18 +161,18 @@ function writing(){
   };
 }
 
-// 5. Fala: entrevista com a Emma
+// 5. Fala: entrevista com a Enma
 function speaking(){
   const hist = [{ role:'user', content:'Hello, I am ready for the interview.' }]; let turns = 0;
-  app.innerHTML = `<h1>Speaking interview</h1><p class="hint">Click "Speak", answer, and wait for the pause. Emma does not correct you during the interview. You can also type.</p><div id="log"></div><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…"><button id="snd">Send</button><button id="fin">Finish and assess</button></div><div id="out"></div>`;
+  app.innerHTML = `<h1>Speaking interview</h1><p class="hint">Click "Speak", answer, and wait for the pause. Enma does not correct you during the interview. You can also type.</p><div id="log"></div><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…"><button id="snd">Send</button><button id="fin">Finish and assess</button></div><div id="out"></div>`;
   const add = (w,t) => { log.insertAdjacentHTML('beforeend', `<div class="card"><b>${w}</b><br>${EC.esc(t)}</div>`); };
   const turn = async () => {
-    st.textContent = 'Emma is thinking…';
-    try { const d = await EC.api('/api/chat', { messages: hist, phase:'placement' }); hist.push({ role:'assistant', content:d.text }); add('Emma', d.text); st.textContent=''; await EC.speak(d.text); }
+    st.textContent = 'Enma is thinking…';
+    try { const d = await EC.api('/api/chat', { messages: hist, phase:'placement' }); hist.push({ role:'assistant', content:d.text }); add('Enma', d.text); st.textContent=''; await EC.speak(d.text); }
     catch(e){ st.textContent = e.message; hist.pop(); }
   };
   const say = t => { t=t.trim(); if(!t) return; tx.value=''; hist.push({ role:'user', content:t }); add('You', t); turns++; turn(); };
-  mic.onclick = async () => { mic.disabled = true; st.textContent = 'Listening…'; try { const r = await EC.listen(); say(r.text); } catch(e){ st.textContent = e.message; } mic.disabled = false; if (!st.textContent.startsWith('Emma')) st.textContent=''; };
+  mic.onclick = async () => { mic.disabled = true; st.textContent = 'Listening…'; try { const r = await EC.listen(); say(r.text); } catch(e){ st.textContent = e.message; } mic.disabled = false; if (!st.textContent.startsWith('Enma')) st.textContent=''; };
   snd.onclick = () => say(tx.value);
   fin.onclick = async () => {
     stopTimer();

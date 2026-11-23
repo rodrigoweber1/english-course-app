@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
-<title>Slang and expressions · Ask Emma</title>
+<title>Slang and expressions · Ask Enma</title>
 <script>__L('common.css')</script>
 <style>
   .reg{display:inline-block;padding:2px 12px;border-radius:999px;font-size:15px;font-weight:500;border:1px solid var(--border);background:var(--tint)}
@@ -45,7 +45,7 @@ function interestsText(){
 function intro(){
   const d = EC.get('interests', null), areas = (d && d.areas) || [], saved = EC.get('slangPack', null);
   app.innerHTML = `<h1>Slang and expressions</h1>
-  <p class="muted">An extra session of about 15 minutes, apart from your lessons. Emma prepares a pack of real British slang, idioms and phrasal verbs. You learn them, take a short quiz and then chat with Emma, trying to use them.</p>
+  <p class="muted">An extra session of about 15 minutes, apart from your lessons. Enma prepares a pack of real British slang, idioms and phrasal verbs. You learn them, take a short quiz and then chat with Enma, trying to use them.</p>
   ${saved ? `<div class="card"><b>Pack in progress</b><p class="hint">${EC.esc(saved.theme)} · ${saved.items.length} expressions</p><button class="primary" id="resume">Continue this pack</button></div>` : ''}
   <div class="card"><h2 style="margin-top:0">New pack</h2>
   <label for="theme">Theme</label><select id="theme"><option value="">Surprise me (from your interests)</option>${areas.map(a => `<option>${EC.esc(a)}</option>`).join('')}<option value="__other">Another theme…</option></select>
@@ -57,7 +57,7 @@ function intro(){
   if (saved) $('resume').onclick = () => { S.pack = saved; S.i = 0; learn(); };
   mk.onclick = async () => {
     const th = theme.value === '__other' ? other.value.trim() : theme.value;
-    mk.disabled = true; mk.textContent = 'Emma is preparing your pack…'; err.textContent = '';
+    mk.disabled = true; mk.textContent = 'Enma is preparing your pack…'; err.textContent = '';
     try {
       const r = await EC.evaluate('slang_pack', { theme: th || 'everyday life', count: +count.value, seen: EC.get('slangSeen', []), interests: interestsText() });
       const items = (r.items || []).filter(x => x && x.term && x.meaning && x.example).map(x => ({ ...x, register: REG[x.register] ? x.register : 'informal', type: x.type || 'expression' }));
@@ -101,12 +101,12 @@ function ask(){
     const ok = q.opts[+b.dataset.k] === q.right; if (ok) S.score++;
     document.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (q.opts[+x.dataset.k] === q.right) x.classList.add('ok'); });
     if (!ok) b.classList.add('no');
-    fbk.innerHTML = `<p class="${ok ? 'okc' : 'err'}">${ok ? 'Correct!' : 'Not quite.'}</p><p class="hint"><b>${EC.esc(q.it.term)}</b>: ${EC.esc(q.it.meaning)}<br><i>${EC.esc(q.it.example)}</i></p><button class="primary" id="qn">${S.qi + 1 < n ? 'Next question' : 'Chat with Emma'}</button>`;
+    fbk.innerHTML = `<p class="${ok ? 'okc' : 'err'}">${ok ? 'Correct!' : 'Not quite.'}</p><p class="hint"><b>${EC.esc(q.it.term)}</b>: ${EC.esc(q.it.meaning)}<br><i>${EC.esc(q.it.example)}</i></p><button class="primary" id="qn">${S.qi + 1 < n ? 'Next question' : 'Chat with Enma'}</button>`;
     qn.onclick = () => { if (S.qi + 1 < n) { S.qi++; ask(); } else talk(); };
   });
 }
 
-// 4. Conversa com a Emma, usando as expressões
+// 4. Conversa com a Enma, usando as expressões
 const norm = t => t.toLowerCase().replace(/[’']/g, "'");
 function usedIn(text, term){
   const t = norm(text), key = norm(term).replace(/\(.*?\)/g, '').replace(/\b(someone|somebody|sth|sb|something)\b/g, '').replace(/\s+/g, ' ').trim();
@@ -116,16 +116,16 @@ function usedIn(text, term){
   return ws.length > 1 && ws.every(w => t.includes(w.slice(0, Math.max(3, w.length - 3))));
 }
 function talk(){
-  S.hist = [{ role: 'user', content: 'Hello Emma, I am ready for the slang chat.' }]; S.used = new Set(); S.t0 = Date.now();
+  S.hist = [{ role: 'user', content: 'Hello Enma, I am ready for the slang chat.' }]; S.used = new Set(); S.t0 = Date.now();
   const its = S.pack.items, extra = its.map(i => i.term + ': ' + i.meaning).join('\n');
-  app.innerHTML = `<h1>Chat with Emma</h1><p class="hint">A relaxed chat. Try to use the expressions below naturally; they turn green when you do. About 8 to 10 minutes is enough. You can also type.</p>
+  app.innerHTML = `<h1>Chat with Enma</h1><p class="hint">A relaxed chat. Try to use the expressions below naturally; they turn green when you do. About 8 to 10 minutes is enough. You can also type.</p>
   <div class="chips" id="chips">${its.map(i => `<span class="chip" data-t="${EC.esc(i.term)}">${EC.esc(i.term)}</span>`).join('')}</div>
   <div id="log"></div><p class="err" id="st" role="status"></p>
   <div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…" aria-label="Type your answer"><button id="snd">Send</button><button id="fin">Finish</button></div>`;
   const add = (w, t) => { log.insertAdjacentHTML('beforeend', `<div class="card"><b>${w}</b><br>${EC.esc(t)}</div>`); window.scrollTo(0, document.body.scrollHeight); };
   const turn = async () => {
-    st.textContent = 'Emma is thinking…';
-    try { const d = await EC.api('/api/chat', { messages: S.hist, phase: 'slang', extra, interests: interestsText() }); S.hist.push({ role: 'assistant', content: d.text }); add('Emma', d.text); st.textContent = ''; await EC.speak(d.text); }
+    st.textContent = 'Enma is thinking…';
+    try { const d = await EC.api('/api/chat', { messages: S.hist, phase: 'slang', extra, interests: interestsText() }); S.hist.push({ role: 'assistant', content: d.text }); add('Enma', d.text); st.textContent = ''; await EC.speak(d.text); }
     catch (e) { st.textContent = e.message; S.hist.pop(); }
   };
   const say = t => {

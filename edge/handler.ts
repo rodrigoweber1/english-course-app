@@ -30,7 +30,7 @@ async function authorize(req: Request) {
   const email = String(u.email || '').toLowerCase();
   const allowed = (Deno.env.get('ALLOWED_EMAILS') || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
   if (!allowed.length) return { err: json(500, { error: 'The ALLOWED_EMAILS secret is not set on the server.' }) };
-  if (!allowed.includes(email)) return { err: json(403, { error: 'This account is not authorised to use Emma.' }) };
+  if (!allowed.includes(email)) return { err: json(403, { error: 'This account is not authorised to use Enma.' }) };
   return { email };
 }
 

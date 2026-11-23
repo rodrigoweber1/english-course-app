@@ -1,4 +1,4 @@
-// Gera os ícones do app (logo "E" da Emma) em docs/: favicon.svg, favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png
+// Gera os ícones do app (logo "E" da Enma) em docs/: favicon.svg, favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png
 // Uso:  node scripts/make-icons.js   (sem dependências: desenha os pixels e grava o PNG com o zlib do Node)
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const out = path.join(__dirname, '..', 'docs');
@@ -8,7 +8,7 @@ const BG1 = [0x63, 0x66, 0xF1], BG2 = [0x37, 0x30, 0xA3];
 const E = [[20, 16, 7, 32], [20, 16, 24, 7], [20, 29.5, 19, 6.5], [20, 41, 24, 7]];   // x, y, largura, altura
 
 fs.writeFileSync(path.join(out, 'favicon.svg'),
-`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ask Emma">
+`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ask Enma">
   <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366F1"/><stop offset="1" stop-color="#3730A3"/></linearGradient></defs>
   <rect width="64" height="64" rx="18" fill="url(#g)"/>
   <g fill="#fff">${E.map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5"/>`).join('')}</g>
@@ -54,7 +54,7 @@ fs.writeFileSync(path.join(out, 'apple-touch-icon.png'), png(180, 0));
 fs.writeFileSync(path.join(out, 'icon-192.png'), png(192, 0));
 fs.writeFileSync(path.join(out, 'icon-512.png'), png(512, 0));
 fs.writeFileSync(path.join(out, 'manifest.webmanifest'), JSON.stringify({
-  name: 'Ask Emma', short_name: 'Ask Emma', description: 'Daily English speaking practice with Emma',
+  name: 'Ask Enma', short_name: 'Ask Enma', description: 'Daily English speaking practice with Enma',
   start_url: 'index.html', scope: './', display: 'standalone', background_color: '#EEF2FF', theme_color: '#4F46E5',
   icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' }, { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }, { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' }],
 }, null, 2) + '\n');
