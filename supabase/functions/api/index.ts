@@ -24,19 +24,38 @@ const PHASES = {
   longturn: 'The learner just finished an uninterrupted long monologue. Give ONE short sentence of positive feedback on content and coherence, then ask them to repeat the same monologue, trying to be smoother and use more linking words.',
 };
 
-function parseJson(t) { const m = t.match(/\{[\s\S]*\}/); return JSON.parse(m ? m[0] : t); }
+// Lê o JSON devolvido pela IA. Se a resposta veio cortada no meio (limite de tamanho), recupera a parte completa e fecha as listas abertas.
+function parseJson(t) {
+  const m = t.match(/\{[\s\S]*\}/), txt = m ? m[0] : t;
+  try { return JSON.parse(txt); } catch (e) {
+    const start = t.indexOf('{'); if (start < 0) throw e;
+    const raw = t.slice(start);
+    for (let i = raw.length; i > 1; i--) {
+      if (!'}]"0123456789el'.includes(raw[i - 1])) continue;
+      let cand = raw.slice(0, i), stack = [], inStr = false, esc = false;
+      for (const c of cand) {
+        if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+        if (c === '"') inStr = true; else if (c === '{' || c === '[') stack.push(c === '{' ? '}' : ']'); else if (c === '}' || c === ']') stack.pop();
+      }
+      if (inStr) continue;
+      cand = cand.replace(/[,:\s]+$/, '') + stack.reverse().join('');
+      try { return JSON.parse(cand); } catch { /* tenta um corte mais curto */ }
+    }
+    throw e;
+  }
+}
 
 // Inventário de estruturas B2 alto/C1 (lista própria, inspirada nos descritores do English Grammar Profile; confirmar condições de uso antes de integrar o recurso oficial)
 const C1_INVENTORY = ['inversion after negative adverbials (Not only / Rarely / Never)','cleft sentences (It was... that / What I... is)','mixed conditionals','third conditional with inversion (Had I known)','passive with reporting verbs (It is said that)','causative have/get something done','modal perfects for deduction (must/can\'t have)','wish/if only with past perfect','subjunctive (I suggest that he be)','participle clauses (Having finished...)','nominalisation','hedging (tends to, seems to, arguably)','discourse markers (Admittedly, Mind you, That said)','concessive clauses (albeit, notwithstanding, much as)','emphatic do','fronting for emphasis','future perfect continuous','ellipsis and substitution','idiomatic collocations (a heated debate, widespread criticism)','phrasal verbs with multiple meanings'];
 const ERR_SHAPE = '"errors":[{"original":"...","correction":"...","type":"grammar|vocabulary|register|punctuation|pronunciation","explanation":"one short sentence in English"}]';
 const TASKS = {
   placement_writing: (p) => ({
-    system: `You are a Cambridge-trained examiner. Assess the CEFR level (B1, B2, C1 or C2) of a short text written by a Spanish/Portuguese-speaking learner. Reply ONLY with JSON: {"cefr":"B2","strengths":["..."],"weaknesses":["..."],${ERR_SHAPE}}. Write strengths, weaknesses and explanations in English.`,
-    user: `Prompt: ${p.prompt}\n\nText:\n${p.text}`, max: 1200,
+    system: `You are a Cambridge-trained examiner. Assess the CEFR level (B1, B2, C1 or C2) of a short text written by a Spanish/Portuguese-speaking learner. Reply ONLY with JSON: {"cefr":"B2","strengths":["..."],"weaknesses":["..."],${ERR_SHAPE}}. Write strengths, weaknesses and explanations in English. List at most 6 errors (the most important ones) and keep every comment short.`,
+    user: `Prompt: ${p.prompt}\n\nText:\n${p.text}`, max: 4000,
   }),
   placement_speaking: (p) => ({
     system: `You are a Cambridge-trained examiner. From this transcript of a placement interview (learner = "user"), estimate CEFR levels (B1,B2,C1,C2) for fluency, grammar, vocabulary, coherence and interaction. Pronunciation can only be guessed from the text: say so. Reply ONLY with JSON: {"cefr":"B2","scores":{"fluency":"B2","grammar":"B2","vocabulary":"B2","coherence":"B2","interaction":"B2"},"strengths":["..."],"weaknesses":["..."],${ERR_SHAPE}}. Write comments in English.`,
-    user: JSON.stringify(p.transcript), max: 1500,
+    user: JSON.stringify(p.transcript), max: 4000,
   }),
   cambridge_writing: (p) => ({
     system: `You are a Cambridge C1 Advanced writing examiner. Mark the text on the four scales (content, communicative achievement, organisation, language), each 0-5 with a one-sentence comment in English. Then give a corrected version of the text and the list of errors. Reply ONLY with JSON: {"scores":{"content":{"score":3,"comment":"..."},"communicative":{"score":3,"comment":"..."},"organisation":{"score":3,"comment":"..."},"language":{"score":3,"comment":"..."}},"corrected":"...",${ERR_SHAPE}}. Types of text: ${p.kind}.`,
