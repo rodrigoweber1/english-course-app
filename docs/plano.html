@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Lexend:wght@400;500;600&display=swap">
 <script>__L('common.css')</script>
 <script>__L('theme.css')</script>
+<script>__L('desktop.css')</script>
 </head>
 <body>
 <div class="wrap" id="app"></div>
@@ -56,6 +57,7 @@ if (sg) {
 
 // Fases
 let acc = 0;
+html += '<div class="cols2"><div>';
 html += '<h2>Phases</h2><table>' + p.phases.map(ph => { const a = acc + 1, b = acc + ph.weeks; acc = b; const cur = wk >= a && wk <= b; return `<tr><td>${cur ? '<b>▶ ' : ''}${EC.esc(ph.name)}${cur ? '</b>' : ''}</td><td>weeks ${a}–${b}</td></tr>`; }).join('') + '</table>';
 
 // Esta semana
@@ -74,6 +76,7 @@ html += '</table>';
 
 // Provas de checkpoint
 const cps = level ? EC.checkpointList() : [], cdue = EC.checkpointDue();
+html += '</div><div>';
 html += '<h2>Progress tests</h2><p class="hint">Checkpoint tests in weeks 8, 16, 24, 32 and 40 of the cycle, plus a final assessment. Each one uses the same format as the placement test and compares your level with the last one. They never change your plan.</p>';
 if (!level) html += '<p class="hint">They unlock after the placement test.</p>';
 else html += '<p>' + cps.map(c => `<span class="pill">${c.final ? 'Final' : 'Week ' + c.week}${c.done ? (c.done.skipped ? ' · skipped' : ' ✓ ' + EC.esc(c.done.overall)) : c.due ? ' · due' : ''}</span>`).join(' ') + '</p>';
@@ -94,6 +97,7 @@ html += `<h2>Progress</h2><div class="card"><table>
 <tr><td>Outside listening logged</td><td>${EC.get('outside', []).reduce((a,x)=>a+x.min,0)} min</td></tr></table>
 ${hist.length ? '<p><b>Level history:</b> ' + hist.map(h => `${fmt(new Date(h.date))}: ${EC.esc(h.overall)}`).join(' → ') + '</p>' : ''}</div>
 <div class="row"><a class="btn" href="ajustes.html">Change days and reminders</a><a class="btn" href="prova.html">Placement test</a></div>`;
+html += '</div></div>';
 app.innerHTML = html;
 const reload = () => location.reload();
 if (sg) { document.getElementById('sgYes').onclick = () => { EC.answerSuggestion(sg, true); reload(); }; document.getElementById('sgNo').onclick = () => { EC.answerSuggestion(sg, false); reload(); }; }

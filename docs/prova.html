@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Lexend:wght@400;500;600&display=swap">
 <script>__L('common.css')</script>
 <script>__L('theme.css')</script>
+<script>__L('desktop.css')</script>
 </head>
 <body>
 <div class="wrap" id="app"></div>
@@ -153,12 +154,14 @@ function intro(){
   const dn = k => res[k] ? ' <span class="pill donepill">✓ Done</span>' : '';
   app.innerHTML = `<h1>${CP ? 'Checkpoint test · week ' + CP : 'Placement test'}</h1>
   <p>${CP ? 'A progress check, same format as the placement test. It shows how far you have come. Your study plan stays as it is.' : 'Measures your real level (B1 to C2). It is adaptive: questions get harder or easier depending on your answers. It takes about <b>38 minutes</b>, and you can do it in two sittings, even on different days: <b>parts 1 and 2</b> (about 13 min) and <b>parts 3 and 4</b> (about 25 min). Each part has its own clock, and the part ends by itself when time is up.'}</p>
-  <div class="row">${[['g1','grammar','1. Grammar and vocabulary'],['g2','reading','2. Reading'],['g3','writing','3. Writing'],['g5','speaking','4. Speaking']].map(([id,k,t]) => `<button id="${id}" class="${res[k] ? 'donebtn' : ''}" ${res[k] ? 'aria-label="' + t + ', done"' : (k === nextK ? 'aria-label="' + t + ', next"' : '')}>${res[k] ? '✓ ' : (k === nextK ? '→ ' : '')}${t}</button>`).join('')}<button id="gr" ${nextK ? '' : 'aria-label="See result, next"'}>${nextK ? '' : '→ '}See result</button></div>
+  <div class="cols2"><div>
+  <div class="row parts">${[['g1','grammar','1. Grammar and vocabulary'],['g2','reading','2. Reading'],['g3','writing','3. Writing'],['g5','speaking','4. Speaking']].map(([id,k,t]) => `<button id="${id}" class="${res[k] ? 'donebtn' : ''}" ${res[k] ? 'aria-label="' + t + ', done"' : (k === nextK ? 'aria-label="' + t + ', next"' : '')}>${res[k] ? '✓ ' : (k === nextK ? '→ ' : '')}${t}</button>`).join('')}<button id="gr" ${nextK ? '' : 'aria-label="See result, next"'}>${nextK ? '' : '→ '}See result</button></div>
+  </div><div>
   ${CP && prevL ? `<div class="card"><b>Your last measured level:</b> ${EC.esc(prevL.overall)} · ${EC.esc(prevL.date)}</div>` : (last ? `<div class="card"><b>Last result:</b> ${EC.esc(last.overall)} · ${EC.esc(last.date)}</div>` : '')}
   <div class="card"><b>Parts</b><ol>
    <li>Grammar and vocabulary (up to 6 min)${dn('grammar')}</li><li>Reading (up to 7 min, two texts)${dn('reading')}</li><li>Writing (up to 15 min, AI marking)${dn('writing')}</li>
    <li>Speaking: interview with Enma (up to 10 min, AI)${dn('speaking')}</li></ol>
-   <p class="hint">Listening is a separate free test (EF SET); you will find it on the result page. You can do some parts now and continue later.</p></div>`;
+   <p class="hint">Listening is a separate free test (EF SET); you will find it on the result page. You can do some parts now and continue later.</p></div></div></div>`;
   g1.onclick = grammar; g2.onclick = reading; g3.onclick = writing; g5.onclick = speaking; gr.onclick = result;
 }
 
@@ -201,8 +204,9 @@ const label = s => { const i = Math.max(0, Math.min(3, Math.floor(s + 0.0001)));
 function reading(){
   let n = 0, html = '<h1>Reading</h1><p class="hint">Two short texts. The second one is harder. Choose one answer for each question.</p>';
   READING.texts.forEach((T, ti) => {
-    html += `<div class="card"><h2 style="margin-top:0">Text ${ti + 1}</h2>${T.text.split('\n\n').map(x => '<p>' + EC.esc(x) + '</p>').join('')}</div>`;
+    html += `<div class="split rd"><aside><div class="card"><h2 style="margin-top:0">Text ${ti + 1}</h2>${T.text.split('\n\n').map(x => '<p>' + EC.esc(x) + '</p>').join('')}</div></aside><section>`;
     T.qs.forEach((q, qi) => { n++; html += `<h2>${n}. ${EC.esc(q.q)}</h2><div class="opts" data-t="${ti}" data-q="${qi}">${q.o.map((o, k) => `<button data-k="${k}">${EC.esc(o)}</button>`).join('')}</div>`; });
+    html += '</section></div>';
   });
   html += `<p class="row"><button class="primary" id="fin">Finish</button><button type="button" id="bk">← Back to parts</button></p>`; app.innerHTML = html;
   const ans = {};
@@ -221,7 +225,7 @@ function reading(){
 
 // 3. Escrita (IA)
 function writing(){
-  app.innerHTML = `<h1>Writing</h1><div class="card">${EC.esc(WPROMPT)}</div><textarea id="t" aria-label="Your text"></textarea><p class="hint" id="wc">0 words</p><div class="row"><button class="primary" id="go">Submit for marking</button><button type="button" onclick="intro()">← Back to parts</button></div><p class="hint">Your text is saved while you type, so you can come back to it.</p><div id="out"></div>`;
+  app.innerHTML = `<h1>Writing</h1><div class="split"><aside><div class="card">${EC.esc(WPROMPT)}</div><p class="hint">Your text is saved while you type, so you can come back to it.</p></aside><section><textarea id="t" aria-label="Your text"></textarea><p class="hint" id="wc">0 words</p><div class="row"><button class="primary" id="go">Submit for marking</button><button type="button" onclick="intro()">← Back to parts</button></div><div id="out"></div></section></div>`;
   const WD = 'writing_text_' + DRAFT;   // o texto é guardado a cada tecla: nunca se perde ao sair, recarregar ou acabar o tempo
   const count = () => wc.textContent = (t.value.trim() ? t.value.trim().split(/\s+/).length : 0) + ' words';
   t.value = EC.get(WD, ''); count();
@@ -243,7 +247,7 @@ function writing(){
 // 4. Fala: entrevista com a Enma
 function speaking(){
   const hist = [{ role:'user', content:'Hello, I am ready for the interview.' }]; let turns = 0;
-  app.innerHTML = `<h1>Speaking interview</h1><p class="hint">Four short stages: <b>1</b> about you, <b>2</b> a talk of about one minute on a past experience, <b>3</b> your opinion, <b>4</b> defending a position. Click "Speak", answer, and wait for the pause. Enma does not correct you during the interview. You can also type.</p><p class="pill" id="stage" aria-live="polite">Stage 1 of 4</p><div id="log"></div><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…"><button id="snd">Send</button><button id="fin">Finish and assess</button><button type="button" id="bk">← Back to parts</button></div><div id="out"></div>`;
+  app.innerHTML = `<h1>Speaking interview</h1><div class="split"><aside><p class="hint">Four short stages: <b>1</b> about you, <b>2</b> a talk of about one minute on a past experience, <b>3</b> your opinion, <b>4</b> defending a position. Click "Speak", answer, and wait for the pause. Enma does not correct you during the interview. You can also type.</p><p class="pill" id="stage" aria-live="polite">Stage 1 of 4</p><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…"><button id="snd">Send</button><button id="fin">Finish and assess</button><button type="button" id="bk">← Back to parts</button></div></aside><section><div id="log"></div><div id="out"></div></section></div>`;
   bk.onclick = () => leave(turns > 0);
   const add = (w,t) => { log.insertAdjacentHTML('beforeend', `<div class="card"><b>${w}</b><br>${EC.esc(t)}</div>`); };
   const turn = async () => {

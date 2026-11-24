@@ -16,6 +16,7 @@
 <script>__L('common.css')</script>
 <style>.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:600px){.cols{grid-template-columns:1fr}}.sc{display:flex;justify-content:space-between;gap:8px}</style>
 <script>__L('theme.css')</script>
+<script>__L('desktop.css')</script>
 </head>
 <body>
 <div class="wrap" id="app"></div>
@@ -40,10 +41,10 @@ const minWords = () => Math.min(220, 120 + hist.length * 15);
 function home(){
   const tk = current();
   app.innerHTML = `<h1>This week's writing</h1><p class="muted">One task a week (~30 min), in the style of Cambridge C1 Advanced. Length target now: ${minWords()}–260 words (it rises to 220–260).</p>
-  <div class="card"><span class="pill">${EC.esc(tk.name)}</span><p>${EC.esc(tk.task)}</p><p class="hint"><b>Recommended structure:</b> ${EC.esc(tk.model)}</p></div>
+  <div class="split"><aside><div class="card"><span class="pill">${EC.esc(tk.name)}</span><p>${EC.esc(tk.task)}</p><p class="hint"><b>Recommended structure:</b> ${EC.esc(tk.model)}</p></div>
+  <h2>History</h2>${hist.slice().reverse().map(h => `<p>${h.date} · ${EC.esc(h.name)} · ${h.words} words · total score ${h.total}/20</p>`).join('') || '<p class="hint">No tasks yet.</p>'}</aside><section>
   <textarea id="t" aria-label="Your text" placeholder="Write here…"></textarea><p class="hint" id="wc">0 words</p>
-  <div class="row"><button class="primary" id="go">Submit for marking</button></div><div id="out"></div>
-  <h2>History</h2>${hist.slice().reverse().map(h => `<p>${h.date} · ${EC.esc(h.name)} · ${h.words} words · total score ${h.total}/20</p>`).join('') || '<p class="hint">No tasks yet.</p>'}`;
+  <div class="row"><button class="primary" id="go">Submit for marking</button></div><div id="out"></div></section></div>`;
   t.oninput = () => wc.textContent = words(t.value) + ' words';
   go.onclick = () => submit(t, document.getElementById('out'), document.getElementById('go'));
 }

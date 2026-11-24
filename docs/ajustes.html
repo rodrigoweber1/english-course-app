@@ -16,10 +16,12 @@
 <script>__L('common.css')</script>
 <style>.dayrow{display:flex;gap:8px;align-items:center;margin:6px 0}.dayrow label{width:104px;margin:0}</style>
 <script>__L('theme.css')</script>
+<script>__L('desktop.css')</script>
 </head>
 <body>
 <div class="wrap">
 <h1>Settings</h1>
+<div class="cols2"><div>
 
 <h2>Weekly lessons</h2>
 <p class="hint">Tick the days and set the time of each lesson (recommended minimum: 2 a week).</p>
@@ -38,6 +40,7 @@
 <p><button id="perm">Turn on reminders in this browser</button> <span class="hint" id="permNote"></span></p>
 <p class="hint">Reminders work while this page is open. To be reminded when the app is closed, use the calendar file below.</p>
 
+</div><div>
 <h2>Pause the plan</h2>
 <div class="row"><input type="date" id="pFrom" aria-label="Pause start"><input type="date" id="pTo" aria-label="Pause end"><button id="addPause">Add pause</button></div>
 <div id="pauses"></div>
@@ -68,6 +71,7 @@
 <div class="row"><button id="bkOut">Export my progress</button><button id="bkIn">Import from a file</button><input type="file" id="bkFile" accept=".json,application/json" hidden></div>
 <p class="hint" id="bkNote"></p>
 
+</div></div>
 <div class="row" style="margin-top:20px"><button class="primary" id="save">Save</button><button id="ics">Export calendar (.ics)</button><button id="iph" style="display:none">Add to iPhone Calendar</button></div>
 <p class="hint" id="iphnote">On your iPhone: open this page in Safari and tap "Add to iPhone Calendar". Your lessons, listening and writing slots, with reminders, go straight into the Calendar app.</p>
 <p id="msg" class="okc"></p>

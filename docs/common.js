@@ -488,7 +488,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.6.1';
+EC.VERSION = '1.6.2';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
