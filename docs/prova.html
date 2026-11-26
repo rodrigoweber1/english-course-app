@@ -2,7 +2,7 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* carrega os arquivos do app com o número da versão no endereço: o navegador nunca mistura arquivo velho com versão nova */(function(){var v='';try{v=new URLSearchParams(location.search).get('v')||localStorage.getItem('ecasset')||''}catch(e){}window.__L=function(f){var q=v?'?v='+encodeURIComponent(v):'';document.write(/\.css$/.test(f)?'<link rel="stylesheet" href="'+f+q+'">':'<script src="'+f+q+'"><\/script>')}})()</script>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -122,9 +122,9 @@ const CP = +new URLSearchParams(location.search).get('checkpoint') || 0;   // se
 const DRAFT = CP ? 'checkpoint_draft' : 'placement_draft';
 // Cronômetro de cada parte (a prova toda dura no máximo 27 minutos: 6 + 7 + 15 + 10 = 38, mais a correção pela IA)
 let TM = null;
-function stopTimer(){ clearInterval(TM); TM = null; const e = document.getElementById('tmr'); if (e) e.remove(); }
+function stopTimer(){ EC.immersive(false); clearInterval(TM); TM = null; const e = document.getElementById('tmr'); if (e) e.remove(); }
 function startTimer(min, onEnd){
-  stopTimer();
+  stopTimer(); EC.immersive(true);
   const until = Date.now() + min * 60000; const e = document.createElement('div');
   e.id = 'tmr'; e.className = 'pill'; e.setAttribute('role', 'timer'); e.setAttribute('aria-label', 'Time left in this part');
   e.style.cssText = 'position:fixed;right:12px;top:78px;z-index:15;background:var(--card);font-variant-numeric:tabular-nums;font-weight:600';
@@ -247,7 +247,7 @@ function writing(){
 // 4. Fala: entrevista com a Enma
 function speaking(){
   const hist = [{ role:'user', content:'Hello, I am ready for the interview.' }]; let turns = 0;
-  app.innerHTML = `<h1>Speaking interview</h1><div class="split"><aside><p class="hint">Four short stages: <b>1</b> about you, <b>2</b> a talk of about one minute on a past experience, <b>3</b> your opinion, <b>4</b> defending a position. Click "Speak", answer, and wait for the pause. Enma does not correct you during the interview. You can also type.</p><p class="pill" id="stage" aria-live="polite">Stage 1 of 4</p><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…"><button id="snd">Send</button><button id="fin">Finish and assess</button><button type="button" id="bk">← Back to parts</button></div></aside><section><div id="log"></div><div id="out"></div></section></div>`;
+  app.innerHTML = `<h1>Speaking interview</h1><div class="split sp"><aside><p class="hint">Four short stages: <b>1</b> about you, <b>2</b> a talk of about one minute on a past experience, <b>3</b> your opinion, <b>4</b> defending a position. Click "Speak", answer, and wait for the pause. Enma does not correct you during the interview. You can also type.</p><p class="pill" id="stage" aria-live="polite">Stage 1 of 4</p><p class="err" id="st"></p><div class="row"><button class="primary" id="mic">Speak</button><input type="text" id="tx" placeholder="Or type…"><button id="snd">Send</button><button id="fin">Finish and assess</button><button type="button" id="bk">← Back to parts</button></div></aside><section><div id="log"></div><div id="out"></div></section></div>`;
   bk.onclick = () => leave(turns > 0);
   const add = (w,t) => { log.insertAdjacentHTML('beforeend', `<div class="card"><b>${w}</b><br>${EC.esc(t)}</div>`); };
   const turn = async () => {

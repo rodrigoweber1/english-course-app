@@ -246,3 +246,52 @@ button.rec .recdot{background:#fff}
 html:root button.rec:disabled:not(.opt):not(.sel){opacity:1;background:var(--danger);color:var(--on-danger);border:1.5px solid var(--danger);border-style:solid}
 
 .crit{margin:8px 0;border-collapse:collapse}.crit td{padding:2px 18px 2px 0;font-size:16px}
+
+/* ===== Celular: barra de abas no estilo do iOS (flutuante, translúcida) ===== */
+.ectab,.ecsheet{display:none}
+@media (max-width:700px), (max-height:500px) and (pointer:coarse){
+  html.ec-tabs body{box-sizing:border-box;padding-bottom:calc((84px + env(safe-area-inset-bottom,0px) * .6) / var(--z,1));padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+  html.ec-tabs .ecmenubtn{display:none}
+  html.ec-tabs .ecnav .ecz{margin-right:0}
+  html.ec-tabs .ecnav .brand{flex:0 1 auto;min-width:0}
+  html.ec-tabs .ecnav .brand b{overflow:hidden;text-overflow:ellipsis}
+  .ectab{display:flex;position:fixed;z-index:25;zoom:calc(1 / var(--z,1));left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px) * .6);max-width:520px;margin:0 auto;height:64px;padding:4px;gap:2px;border-radius:999px;
+    font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:color-mix(in srgb,var(--card) 74%,transparent);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid color-mix(in srgb,var(--fg) 14%,transparent);box-shadow:0 10px 30px -8px rgba(15,12,60,.35),inset 0 1px 0 color-mix(in srgb,#fff 25%,transparent);-webkit-user-select:none;user-select:none}
+  html .ectab a.ectab-i{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:999px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:600;line-height:1.2;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;transition:background .2s,color .2s,transform .12s}
+  html .ectab a.ectab-i:active{transform:scale(.94)}
+  html .ectab a.ectab-i.on{color:var(--primary);background:color-mix(in srgb,var(--primary) 15%,transparent)}
+  .ectab-i svg{width:25px;height:25px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .ectab-i span{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  html .ectab a.ectab-i:focus-visible{outline:3px solid var(--primary);outline-offset:-3px}
+  /* Teclado aberto: a barra sai do caminho */
+  html:has(textarea:focus,input[type=text]:focus,input[type=number]:focus,input[type=email]:focus,input[type=password]:focus) .ectab{display:none}
+  /* Aula em andamento e partes cronometradas da prova */
+  html.ec-focus .ectab{display:none}
+  html.ec-tabs.ec-focus body{padding-bottom:env(safe-area-inset-bottom,0px)}
+  html.ec-tabs.ec-focus .ecmenubtn{display:inline-flex}
+  html.ec-tabs #start,html.ec-tabs #summary{padding-bottom:calc((84px + env(safe-area-inset-bottom,0px) * .6) / var(--z,1))!important}
+  html.ec-tabs body:not(:has(#chat)) .bar{bottom:calc((80px + env(safe-area-inset-bottom,0px) * .6) / var(--z,1))}
+  /* Folha "More": sobe de baixo, lista agrupada */
+  .ecsheet[open]{display:block;position:fixed;inset:auto 0 0 0;margin:0 auto;width:100%;max-width:560px;max-height:calc(88dvh / var(--z,1));padding:0;overflow-y:auto;border:0;border-radius:28px 28px 0 0;background:var(--bg);color:var(--fg);animation:ecsheet .28s cubic-bezier(.32,.72,0,1)}
+  .ecsheet::backdrop{background:rgba(10,8,40,.45)}
+  .ecsheet-in{padding:8px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+  .ecsheet-in::before{content:"";display:block;width:38px;height:5px;border-radius:3px;margin:0 auto 8px;background:color-mix(in srgb,var(--fg) 25%,transparent)}
+  .ecsheet-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .ecsheet-top b{font-family:var(--font-head);font-size:24px}
+  .ecsheet-list{background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+  html .ecsheet-list a{display:flex;align-items:center;gap:14px;min-height:52px;padding:0 16px;text-decoration:none;color:var(--fg);font-size:17px;font-weight:500}
+  .ecsheet-list a + a{border-top:1px solid var(--border)}
+  .ecsheet-list a::after{content:"\203A";margin-left:auto;font-size:24px;color:var(--muted)}
+  .ecsheet-list a svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  html .ecsheet-list a.on{background:color-mix(in srgb,var(--primary) 15%,var(--card));color:var(--primary)}
+  .ecsheet .ecmail{padding:14px 16px 6px;margin:0}
+  .ecsheet .ecout{width:100%;min-height:50px}
+}
+@keyframes ecsheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
+/* Entrevista da prova em telas estreitas: a conversa vem antes dos botões (no computador, ficam lado a lado) */
+@media (max-width:1099px){
+  .split.sp{display:flex;flex-direction:column}
+  .sp > aside,.sp > section{display:contents}
+  .sp #log{order:1}.sp #st{order:2}.sp .row{order:3}.sp #out{order:4}
+}

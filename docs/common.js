@@ -76,7 +76,33 @@ const EC = {
     });
     const out = n.querySelector('.ecout'); if (out) out.onclick = () => EC.signOut();
     document.body.prepend(n);
+    EC.tabbar(active, I, link, email);
   },
+
+  // Celular: barra de abas no rodapé, no estilo do iOS (4 páginas + "More"). Só aparece em telas de celular (ver theme.css).
+  tabbar(active, I, link, email){
+    const tabs = [['index.html','Lesson'],['escuta.html','Listening'],['escrita.html','Writing'],['plano.html','Plan']];
+    const more = [['girias.html','Slang'],['biblioteca.html','Library'],['prova.html','Placement test'],['interesses.html','Interests'],['ajustes.html','Settings']];
+    const svg = p => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+    const bar = document.createElement('nav'); bar.className = 'ectab'; bar.setAttribute('aria-label', 'Tabs');
+    bar.innerHTML = tabs.map(([h,t]) => `<a class="ectab-i${h===active?' on':''}" href="${h}" ${h===active?'aria-current="page"':''}>${svg(I[h.replace('.html','')])}<span>${t}</span></a>`).join('') +
+      `<a class="ectab-i${more.some(([h]) => h === active)?' on':''}" href="#more" role="button" aria-haspopup="dialog">${svg('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>')}<span>More</span></a>`;
+    const sheet = document.createElement('dialog'); sheet.className = 'ecsheet'; sheet.setAttribute('aria-label', 'More pages');
+    sheet.innerHTML = '<div class="ecsheet-in"><div class="ecsheet-top"><b>More</b><button type="button" class="ecdone">Done</button></div>' +
+      `<div class="ecsheet-list">${more.map(link).join('').replace(/ role="menuitem"/g, '')}</div>` +
+      (email ? `<p class="ecmail">${EC.esc(email)}</p><button type="button" class="ecout">Sign out</button>` : '') + '</div>';
+    bar.querySelector('[role=button]').onclick = e => { e.preventDefault(); sheet.showModal(); };
+    // Como no iOS: tocar na aba da página atual volta para o topo
+    const cur = bar.querySelector('a[aria-current]');
+    if (cur) cur.onclick = e => { if (scrollY > 0) { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); } };
+    sheet.querySelector('.ecdone').onclick = () => sheet.close();
+    sheet.onclick = e => { if (e.target === sheet) sheet.close(); };
+    const out = sheet.querySelector('.ecout'); if (out) out.onclick = () => EC.signOut();
+    document.body.append(bar, sheet);
+    document.documentElement.classList.add('ec-tabs');
+  },
+  // Durante a aula e as partes cronometradas da prova a barra de abas some (evita sair sem querer) e o botão Menu volta ao topo
+  immersive(on){ document.documentElement.classList.toggle('ec-focus', !!on); },
 
   // Tamanho do texto (A− / A+): níveis de 0.85 a 1.6, guardado neste navegador
   zoom(step){
@@ -488,7 +514,7 @@ EC.askFeedback = (el, kind, label, ctx) => {
 
 // ---------- Versão do app, aviso de versão nova e rodapé ----------
 // Para lançar uma versão nova: mude EC.VERSION aqui e "version" em docs/version.json, para o mesmo número.
-EC.VERSION = '1.6.2';
+EC.VERSION = '1.7.0';
 try { localStorage.setItem('ecasset', EC.VERSION); } catch {}   // as páginas carregam os arquivos com este número (veja __L nos .html)
 EC.footerHtml = () => `Made with <span aria-label="love" role="img">❤️</span> for Mary<span class="ecver"> · v${EC.VERSION}</span>`;
 EC.checkUpdate = async () => {
@@ -503,7 +529,7 @@ EC.checkUpdate = async () => {
     b.querySelector('#ecupdGo').onclick = async () => {
       const go = b.querySelector('#ecupdGo'); go.disabled = true; go.textContent = 'Updating…';
       // Baixa de novo os arquivos do app (ignora a cópia guardada no aparelho) e só então recarrega
-      const files = ['common.js', 'common.css', 'theme.css', 'config.js', 'version.json', 'index.html', 'login.html', 'plano.html', 'prova.html', 'biblioteca.html', 'escuta.html', 'escrita.html', 'interesses.html', 'ajustes.html'];
+      const files = ['common.js', 'common.css', 'theme.css', 'desktop.css', 'girias.html', 'config.js', 'version.json', 'index.html', 'login.html', 'plano.html', 'prova.html', 'biblioteca.html', 'escuta.html', 'escrita.html', 'interesses.html', 'ajustes.html'];
       try { await Promise.all(files.map(f => fetch(f, { cache: 'reload' }).catch(() => {}))); } catch {}
       try { if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch {}
       const u = new URL(location.href); u.searchParams.set('v', v); location.replace(u.toString());

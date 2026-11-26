@@ -2,7 +2,7 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* carrega os arquivos do app com o número da versão no endereço: o navegador nunca mistura arquivo velho com versão nova */(function(){var v='';try{v=new URLSearchParams(location.search).get('v')||localStorage.getItem('ecasset')||''}catch(e){}window.__L=function(f){var q=v?'?v='+encodeURIComponent(v):'';document.write(/\.css$/.test(f)?'<link rel="stylesheet" href="'+f+q+'">':'<script src="'+f+q+'"><\/script>')}})()</script>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -41,10 +41,9 @@ const minWords = () => Math.min(220, 120 + hist.length * 15);
 function home(){
   const tk = current();
   app.innerHTML = `<h1>This week's writing</h1><p class="muted">One task a week (~30 min), in the style of Cambridge C1 Advanced. Length target now: ${minWords()}–260 words (it rises to 220–260).</p>
-  <div class="split"><aside><div class="card"><span class="pill">${EC.esc(tk.name)}</span><p>${EC.esc(tk.task)}</p><p class="hint"><b>Recommended structure:</b> ${EC.esc(tk.model)}</p></div>
-  <h2>History</h2>${hist.slice().reverse().map(h => `<p>${h.date} · ${EC.esc(h.name)} · ${h.words} words · total score ${h.total}/20</p>`).join('') || '<p class="hint">No tasks yet.</p>'}</aside><section>
+  <div class="split wk"><aside><div class="card"><span class="pill">${EC.esc(tk.name)}</span><p>${EC.esc(tk.task)}</p><p class="hint"><b>Recommended structure:</b> ${EC.esc(tk.model)}</p></div></aside><section>
   <textarea id="t" aria-label="Your text" placeholder="Write here…"></textarea><p class="hint" id="wc">0 words</p>
-  <div class="row"><button class="primary" id="go">Submit for marking</button></div><div id="out"></div></section></div>`;
+  <div class="row"><button class="primary" id="go">Submit for marking</button></div><div id="out"></div></section><div class="hist"><h2>History</h2>${hist.slice().reverse().map(h => `<p>${h.date} · ${EC.esc(h.name)} · ${h.words} words · total score ${h.total}/20</p>`).join('') || '<p class="hint">No tasks yet.</p>'}</div></div>`;
   t.oninput = () => wc.textContent = words(t.value) + ' words';
   go.onclick = () => submit(t, document.getElementById('out'), document.getElementById('go'));
 }

@@ -2,7 +2,7 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* carrega os arquivos do app com o número da versão no endereço: o navegador nunca mistura arquivo velho com versão nova */(function(){var v='';try{v=new URLSearchParams(location.search).get('v')||localStorage.getItem('ecasset')||''}catch(e){}window.__L=function(f){var q=v?'?v='+encodeURIComponent(v):'';document.write(/\.css$/.test(f)?'<link rel="stylesheet" href="'+f+q+'">':'<script src="'+f+q+'"><\/script>')}})()</script>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -378,7 +378,7 @@ function startNextPhase(){
 $('next').onclick = () => { if (transition) { if (transReady) startNextPhase(); } else endPhase(); };
 $('end').onclick = async () => {
   speechSynthesis.cancel(); if (listening) rec.stop();
-  clearInterval(clockTimer); lessonActive = false; EC.set('lesson', null);
+  clearInterval(clockTimer); lessonActive = false; EC.immersive(false); EC.set('lesson', null);
   if (!transition) scorePhase(phase); transition = false;
   if (paused) { pausedMs += Date.now() - pauseStart; paused = false; }
   const el = elapsed(), tot = userMs + tutorMs, up = tot ? Math.round(userMs/tot*100) : 0;
@@ -440,7 +440,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) saveL
 
 $('go').onclick = () => {
   $('start').style.display = 'none';
-  EC.set('lesson', null); lessonActive = true;
+  EC.set('lesson', null); lessonActive = true; EC.immersive(true);
   startedAt = Date.now(); startTimers();
   history.push({ role:'user', content:'Hello! Please start our lesson.' });
   ask();
@@ -457,7 +457,7 @@ function restoreLesson(L){
     if (m.content.startsWith('(') || m.content.startsWith('Hello! Please')) return;
     if (m.role === 'assistant') addTutor(m.content); else addMsg('user', m.content);
   });
-  $('start').style.display = 'none'; lessonActive = true;
+  $('start').style.display = 'none'; lessonActive = true; EC.immersive(true);
   paused = true; pauseStart = Date.now(); pausedMs = 0; startedAt = Date.now() - L.elapsed * 1000;
   startTimers(); tick();
   if (history[history.length-1].role === 'user' && !history[history.length-1].content.startsWith('(')) needAsk = true;
